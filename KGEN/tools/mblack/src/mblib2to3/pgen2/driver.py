@@ -759,22 +759,3 @@ def load_packaged_grammar(
     g = grammar.Grammar()
     g.loads(data)
     return g
-
-
-def main(*args: str) -> bool:
-    """Main program, when run as a script: produce grammar pickle files.
-
-    Calls load_grammar for each argument, a path to a grammar text file.
-    """
-    if not args:
-        args = tuple(sys.argv[1:])
-    logging.basicConfig(
-        level=logging.INFO, stream=sys.stdout, format="%(message)s"
-    )
-    for gt in args:
-        load_grammar(gt, save=True, force=True)
-    return True
-
-
-if __name__ == "__main__":
-    sys.exit(int(not main()))
