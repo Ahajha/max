@@ -1,0 +1,23 @@
+load("//bazel:api.bzl", "modular_py_library")
+
+package(default_visibility = ["//visibility:public"])
+
+modular_py_library(
+    name = "pgen2",
+    srcs = glob(["pgen2/*.py"]),
+    data = [
+        "Grammar.txt",
+        "PatternGrammar.txt",
+    ],
+    imports = [".."],
+)
+
+# TODO: Should we do anything with these? Maybe delete some of them?
+filegroup(
+    name = "unreferenced-files",
+    srcs = [
+        "LICENSE",
+        "README",
+    ],
+    tags = ["maybe-unused"],
+)

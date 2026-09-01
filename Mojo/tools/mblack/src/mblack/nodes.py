@@ -32,9 +32,8 @@ from typing import (
     TypeVar,
 )
 
-from mblib2to3 import pygram
-from mblib2to3.pgen2 import token
-from mblib2to3.pytree import NL, Leaf, Node, type_repr
+from mblib2to3.pgen2 import pygram, token
+from mblib2to3.pgen2.pytree import NL, Leaf, Node, type_repr
 from mypy_extensions import mypyc_attr
 
 from mblack.cache import CACHE_DIR

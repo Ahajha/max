@@ -27,7 +27,8 @@ from functools import lru_cache
 from typing import Final
 
 from mblib2to3.pgen2 import token
-from mblib2to3.pytree import Leaf, Node
+from mblib2to3.pgen2.driver import FMT_OFF, FMT_ON
+from mblib2to3.pgen2.pytree import Leaf, Node
 
 from mblack.nodes import (
     CLOSING_BRACKETS,
@@ -42,10 +43,8 @@ from mblack.nodes import (
 # types
 LN = Leaf | Node
 
-FMT_OFF: Final = {"# fmt: off", "# fmt:off", "# yapf: disable"}
 FMT_SKIP: Final = {"# fmt: skip", "# fmt:skip"}
 FMT_PASS: Final = {*FMT_OFF, *FMT_SKIP}
-FMT_ON: Final = {"# fmt: on", "# fmt:on", "# yapf: enable"}
 
 COMMENT_EXCEPTIONS = {True: " !:#'", False: " !:#'%"}
 
@@ -54,7 +53,7 @@ COMMENT_EXCEPTIONS = {True: " !:#'", False: " !:#'%"}
 class ProtoComment:
     """Describes a piece of syntax that is a comment.
 
-    It's not a :class:`mblib2to3.pytree.Leaf` so that:
+    It's not a :class:`mblib2to3.pgen2.pytree.Leaf` so that:
 
     * it can be cached (`Leaf` objects should not be reused more than once as
       they store their lineno, column, prefix, and parent information);

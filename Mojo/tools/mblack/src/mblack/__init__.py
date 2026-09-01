@@ -41,7 +41,7 @@ import click
 from _mblack_version import version as __version__
 from click.core import ParameterSource
 from mblib2to3.pgen2 import token
-from mblib2to3.pytree import Leaf, Node
+from mblib2to3.pgen2.pytree import Leaf, Node
 from mypy_extensions import mypyc_attr
 from pathspec import PathSpec
 from pathspec.pattern import Pattern as PathSpecPattern

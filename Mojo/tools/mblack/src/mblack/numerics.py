@@ -24,7 +24,7 @@
 Formatting numeric literals.
 """
 
-from mblib2to3.pytree import Leaf
+from mblib2to3.pgen2.pytree import Leaf
 
 
 def format_hex(text: str) -> str:

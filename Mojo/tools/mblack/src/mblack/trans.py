@@ -38,7 +38,7 @@ from typing import (
 )
 
 from mblib2to3.pgen2 import token
-from mblib2to3.pytree import Leaf, Node
+from mblib2to3.pgen2.pytree import Leaf, Node
 from mypy_extensions import trait
 
 from mblack.comments import contains_pragma_comment
