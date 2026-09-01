@@ -1,0 +1,24 @@
+load("//bazel:api.bzl", "modular_py_library", "mojo_shared_library")
+
+package(default_visibility = ["//visibility:public"])
+
+mojo_shared_library(
+    name = "token",
+    srcs = ["token.mojo"],
+    shared_lib_name = "token.so",
+    deps = [
+        "@mojo//:std",
+    ],
+)
+
+modular_py_library(
+    name = "token_lib",
+    data = [":token"],
+    imports = ["../.."],
+    pyi_srcs = ["token.pyi"],
+)
+
+filegroup(
+    name = "srcs",
+    srcs = glob(["*.py"]),
+)
