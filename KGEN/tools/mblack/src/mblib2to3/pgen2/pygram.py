@@ -30,8 +30,8 @@ import os
 from typing import Union
 
 # Local imports
-from .pgen2 import driver
-from .pgen2.grammar import Grammar
+from . import driver
+from .grammar import Grammar
 
 # Moved into initialize because mypyc can't handle __file__ (XXX bug)
 # # The grammar file
@@ -206,9 +206,9 @@ def initialize(cache_dir: Union[str, "os.PathLike[str]", None] = None) -> None:
     global pattern_symbols
 
     # The grammar file
-    _GRAMMAR_FILE = os.path.join(os.path.dirname(__file__), "Grammar.txt")
+    _GRAMMAR_FILE = os.path.join(os.path.dirname(__file__), "..", "Grammar.txt")
     _PATTERN_GRAMMAR_FILE = os.path.join(
-        os.path.dirname(__file__), "PatternGrammar.txt"
+        os.path.dirname(__file__), "..", "PatternGrammar.txt"
     )
 
     # Python 2

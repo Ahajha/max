@@ -29,12 +29,11 @@ import sys
 from collections.abc import Iterable, Iterator
 from typing import Final
 
-from mblib2to3 import pygram
-from mblib2to3.pgen2 import driver, token
+from mblib2to3.pgen2 import driver, pygram, token
 from mblib2to3.pgen2.grammar import Grammar
 from mblib2to3.pgen2.parse import ParseError
+from mblib2to3.pgen2.pytree import Leaf, Node
 from mblib2to3.pgen2.tokenize import TokenError
-from mblib2to3.pytree import Leaf, Node
 
 from mblack.mode import Feature, TargetVersion, supports_feature
 from mblack.nodes import syms

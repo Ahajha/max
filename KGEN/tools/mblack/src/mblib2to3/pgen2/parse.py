@@ -41,7 +41,7 @@ from typing import (
 )
 
 from mblib2to3.pgen2.grammar import Grammar
-from mblib2to3.pytree import NL, Context, Leaf, Node, RawNode, convert
+from mblib2to3.pgen2.pytree import NL, Context, Leaf, Node, RawNode, convert
 
 # Local imports
 from . import grammar, token, tokenize
@@ -221,7 +221,7 @@ class Parser:
         up.
 
         **post-note: the convert argument is ignored since for Black's
-        usage, convert will always be mblib2to3.pytree.convert. Allowing
+        usage, convert will always be mblib2to3.pgen2.pytree.convert. Allowing
         this to be dynamic hurts mypyc's ability to use early binding.
         These docs are left for historical and informational value.
 

@@ -434,7 +434,7 @@ class Leaf(Base):
 
     def __repr__(self) -> str:
         """Return a canonical string representation."""
-        from .pgen2.token import tok_name
+        from .token import tok_name
 
         assert self.type is not None
         return f"{self.__class__.__name__}({tok_name.get(self.type, self.type)}, {self.value!r})"

@@ -25,7 +25,7 @@ from dataclasses import dataclass
 from typing import TypeVar
 
 from mblib2to3.pgen2 import token
-from mblib2to3.pytree import Leaf, Node, type_repr
+from mblib2to3.pgen2.pytree import Leaf, Node, type_repr
 
 from mblack.nodes import Visitor
 from mblack.output import out

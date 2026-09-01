@@ -48,16 +48,11 @@ from collections.abc import Iterable, Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from logging import Logger
-from typing import (
-    IO,
-    Any,
-    Union,
-    cast,
-)
+from typing import IO, Any, Final, Union, cast
 
 from mblib2to3.pgen2.grammar import Grammar
+from mblib2to3.pgen2.pytree import NL
 from mblib2to3.pgen2.tokenize import GoodTokenInfo
-from mblib2to3.pytree import NL
 
 # Pgen imports
 from . import grammar, parse, pgen, token, tokenize
@@ -65,6 +60,9 @@ from . import grammar, parse, pgen, token, tokenize
 Path = Union[str, "os.PathLike[str]"]
 
 _COLON_ONLY_LINE = re.compile(r"^\s+:\s*$")
+
+FMT_OFF: Final = {"# fmt: off", "# fmt:off", "# yapf: disable"}
+FMT_ON: Final = {"# fmt: on", "# fmt:on", "# yapf: enable"}
 
 
 def _join_colon_next_line(prev: str, line: str, head_indent: int) -> str | None:
@@ -422,7 +420,6 @@ def _normalize_mojo_source(text: str) -> str:
     In an ideal architecture normalization would not be required. In
     reality the grammar strongly assumes that new lines end statements.
     """
-    from mblack.comments import FMT_OFF, FMT_ON
 
     lines = text.split("\n")
     result: list[str] = []
