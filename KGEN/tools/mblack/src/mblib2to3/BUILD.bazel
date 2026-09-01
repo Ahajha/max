@@ -4,12 +4,17 @@ package(default_visibility = ["//visibility:public"])
 
 modular_py_library(
     name = "pgen2",
-    srcs = glob(["pgen2/*.py"]),
+    srcs = [
+        "//KGEN/tools/mblack/src/mblib2to3/pgen2:srcs",
+    ],
     data = [
         "Grammar.txt",
         "PatternGrammar.txt",
     ],
     imports = [".."],
+    deps = [
+        "//KGEN/tools/mblack/src/mblib2to3/pgen2:token_lib",
+    ],
 )
 
 # TODO: Should we do anything with these? Maybe delete some of them?
