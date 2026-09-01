@@ -121,7 +121,7 @@ comptime NT_OFFSET = 256
 #     if type(_value) is int:
 #         tok_name[_value] = _name
 
-comptime PyType_GenericAlloc = ExternalFunction[
+comptime PyModule_AddIntConstant = ExternalFunction[
     "PyModule_AddIntConstant",
     # int PyModule_AddIntConstant(PyObject *module, const char *name, long value)
     def(
@@ -135,9 +135,9 @@ def PyInit_token() abi("C") -> PythonObject:
     try:
         var mb = PythonModuleBuilder("token")
         ref cpython = Python().cpython()
-        var PyType_GenericAlloc_call: PyType_GenericAlloc.type = PyType_GenericAlloc.load(cpython.lib.borrow())
-        def add_int_constant(name: StaticString, value: c_long) {mut mb, mut PyType_GenericAlloc_call}:
-            _ = PyType_GenericAlloc_call(mb.module._obj_ptr, name.as_c_string_slice().ptr().as_unsafe_any_origin(), value)
+        var PyModule_AddIntConstant_call: PyModule_AddIntConstant.type = PyModule_AddIntConstant.load(cpython.lib.borrow())
+        def add_int_constant(name: StaticString, value: c_long) {mut mb, mut PyModule_AddIntConstant_call}:
+            _ = PyModule_AddIntConstant_call(mb.module._obj_ptr, name.as_c_string_slice().ptr().as_unsafe_any_origin(), value)
 
 
         add_int_constant("ENDMARKER", ENDMARKER)
