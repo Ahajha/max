@@ -23,9 +23,9 @@
 """Token constants (from "token.h")."""
 
 from std.python import PythonObject, Python
-from std.python.bindings import PythonModuleBuilder
+from std.python.bindings import PythonModuleBuilder, PyObjectPtr
 from std.os import abort
-from std.python._cpython import ExternalFunction, PyObjectPtr
+from std.python._cpython import ExternalFunction
 from std.ffi import c_char, c_long, c_int
 
 #  Taken from Python (r53757) and modified to include some tokens
@@ -116,17 +116,41 @@ comptime GENERATOR_TYPE = 78
 comptime NT_OFFSET = 256
 # --end constants--
 
-# tok_name[dict[int, str]] = {}
-# for _name, _value in list(globals().items()):
-#     if type(_value) is int:
-#         tok_name[_value] = _name
 
 comptime PyModule_AddIntConstant = ExternalFunction[
     "PyModule_AddIntConstant",
     # int PyModule_AddIntConstant(PyObject *module, const char *name, long value)
     def(
-        PyObjectPtr, OptionalPointer[c_char, ImmutAnyOrigin], c_long,
+        PyObjectPtr,
+        OptionalPointer[c_char, ImmutAnyOrigin],
+        c_long,
     ) thin abi("C") -> c_int,
+]
+
+comptime PyDict_SetItemString = ExternalFunction[
+    "PyDict_SetItemString",
+    # int PyDict_SetItemString(PyObject *p, const char *key, PyObject *val)
+    def(
+        PyObjectPtr,
+        OptionalPointer[c_char, ImmutAnyOrigin],
+        PyObjectPtr,
+    ) thin abi("C") -> c_int,
+]
+
+comptime PyModule_Add = ExternalFunction[
+    "PyModule_Add",
+    # int PyModule_AddObject(PyObject *module, const char *name, PyObject *value)
+    def(
+        PyObjectPtr,
+        OptionalPointer[c_char, ImmutAnyOrigin],
+        PyObjectPtr,
+    ) thin abi("C") -> c_int,
+]
+
+comptime PyLong_FromLong = ExternalFunction[
+    "PyLong_FromLong",
+    #  PyObject *PyLong_FromLong(long v)
+    def(c_long) thin abi("C") -> PyObjectPtr,
 ]
 
 
@@ -135,10 +159,27 @@ def PyInit_token() abi("C") -> PythonObject:
     try:
         var mb = PythonModuleBuilder("token")
         ref cpython = Python().cpython()
-        var PyModule_AddIntConstant_call: PyModule_AddIntConstant.type = PyModule_AddIntConstant.load(cpython.lib.borrow())
-        def add_int_constant(name: StaticString, value: c_long) {mut mb, mut PyModule_AddIntConstant_call}:
-            _ = PyModule_AddIntConstant_call(mb.module._obj_ptr, name.as_c_string_slice().ptr().as_unsafe_any_origin(), value)
+        var PyModule_AddIntConstant_call: PyModule_AddIntConstant.type = (
+            PyModule_AddIntConstant.load(cpython.lib.borrow())
+        )
+        var PyDict_SetItemString_call: PyDict_SetItemString.type = (
+            PyDict_SetItemString.load(cpython.lib.borrow())
+        )
+        var PyModule_Add_call: PyModule_Add.type = PyModule_Add.load(
+            cpython.lib.borrow()
+        )
+        var PyLong_FromLong_call: PyLong_FromLong.type = PyLong_FromLong.load(
+            cpython.lib.borrow()
+        )
 
+        def add_int_constant(
+            name: StaticString, value: c_long
+        ) {mut mb, PyModule_AddIntConstant_call}:
+            _ = PyModule_AddIntConstant_call(
+                mb.module._obj_ptr,
+                name.as_c_string_slice().ptr().as_unsafe_any_origin(),
+                value,
+            )
 
         add_int_constant("ENDMARKER", ENDMARKER)
         add_int_constant("NAME", NAME)
@@ -220,6 +261,103 @@ def PyInit_token() abi("C") -> PythonObject:
 
         # Progress! Now we need `tok_name`
 
+        var tok_name = cpython.PyDict_New()
+
+        def set_tok_name(
+            name: StaticString, value: c_long
+        ) {mut tok_name, PyDict_SetItemString_call, PyLong_FromLong_call}:
+            var value_obj = PyLong_FromLong_call(value)
+            _ = PyDict_SetItemString_call(
+                tok_name,
+                name.as_c_string_slice().ptr().as_unsafe_any_origin(),
+                value_obj,
+            )
+            # TODO: PyDict_SetItemString does _not_ steal a reference, so we must decref here.
+
+        set_tok_name("ENDMARKER", ENDMARKER)
+        set_tok_name("NAME", NAME)
+        set_tok_name("NUMBER", NUMBER)
+        set_tok_name("STRING", STRING)
+        set_tok_name("NEWLINE", NEWLINE)
+        set_tok_name("INDENT", INDENT)
+        set_tok_name("DEDENT", DEDENT)
+        set_tok_name("LPAR", LPAR)
+        set_tok_name("RPAR", RPAR)
+        set_tok_name("LSQB", LSQB)
+        set_tok_name("RSQB", RSQB)
+        set_tok_name("COLON", COLON)
+        set_tok_name("COMMA", COMMA)
+        set_tok_name("SEMI", SEMI)
+        set_tok_name("PLUS", PLUS)
+        set_tok_name("MINUS", MINUS)
+        set_tok_name("STAR", STAR)
+        set_tok_name("SLASH", SLASH)
+        set_tok_name("VBAR", VBAR)
+        set_tok_name("AMPER", AMPER)
+        set_tok_name("LESS", LESS)
+        set_tok_name("GREATER", GREATER)
+        set_tok_name("EQUAL", EQUAL)
+        set_tok_name("DOT", DOT)
+        set_tok_name("PERCENT", PERCENT)
+        set_tok_name("BACKQUOTE", BACKQUOTE)
+        set_tok_name("LBRACE", LBRACE)
+        set_tok_name("RBRACE", RBRACE)
+        set_tok_name("EQEQUAL", EQEQUAL)
+        set_tok_name("NOTEQUAL", NOTEQUAL)
+        set_tok_name("LESSEQUAL", LESSEQUAL)
+        set_tok_name("GREATEREQUAL", GREATEREQUAL)
+        set_tok_name("TILDE", TILDE)
+        set_tok_name("CIRCUMFLEX", CIRCUMFLEX)
+        set_tok_name("LEFTSHIFT", LEFTSHIFT)
+        set_tok_name("RIGHTSHIFT", RIGHTSHIFT)
+        set_tok_name("DOUBLESTAR", DOUBLESTAR)
+        set_tok_name("PLUSEQUAL", PLUSEQUAL)
+        set_tok_name("MINEQUAL", MINEQUAL)
+        set_tok_name("STAREQUAL", STAREQUAL)
+        set_tok_name("SLASHEQUAL", SLASHEQUAL)
+        set_tok_name("PERCENTEQUAL", PERCENTEQUAL)
+        set_tok_name("AMPEREQUAL", AMPEREQUAL)
+        set_tok_name("VBAREQUAL", VBAREQUAL)
+        set_tok_name("CIRCUMFLEXEQUAL", CIRCUMFLEXEQUAL)
+        set_tok_name("LEFTSHIFTEQUAL", LEFTSHIFTEQUAL)
+        set_tok_name("RIGHTSHIFTEQUAL", RIGHTSHIFTEQUAL)
+        set_tok_name("DOUBLESTAREQUAL", DOUBLESTAREQUAL)
+        set_tok_name("DOUBLESLASH", DOUBLESLASH)
+        set_tok_name("DOUBLESLASHEQUAL", DOUBLESLASHEQUAL)
+        set_tok_name("AT", AT)
+        set_tok_name("ATEQUAL", ATEQUAL)
+        set_tok_name("OP", OP)
+        set_tok_name("COMMENT", COMMENT)
+        set_tok_name("NL", NL)
+        set_tok_name("RARROW", RARROW)
+        set_tok_name("AWAIT", AWAIT)
+        set_tok_name("ASYNC", ASYNC)
+        set_tok_name("ERRORTOKEN", ERRORTOKEN)
+        set_tok_name("COLONEQUAL", COLONEQUAL)
+        set_tok_name("N_TOKENS", N_TOKENS)
+        set_tok_name("STRUCT", STRUCT)
+        set_tok_name("ALIAS", ALIAS)
+        set_tok_name("REF", REF)
+        set_tok_name("VAR", VAR)
+        set_tok_name("MLIR_REGION", MLIR_REGION)
+        set_tok_name("READ", READ)
+        set_tok_name("MUT", MUT)
+        set_tok_name("OUT", OUT)
+        set_tok_name("TRAIT", TRAIT)
+        set_tok_name("DEINIT", DEINIT)
+        set_tok_name("WHERE", WHERE)
+        set_tok_name("EXTENSION", EXTENSION)
+        set_tok_name("COMPTIME", COMPTIME)
+        set_tok_name("IMM", IMM)
+        set_tok_name("GENERATOR_TYPE", GENERATOR_TYPE)
+        set_tok_name("NT_OFFSET", NT_OFFSET)
+
+        # No need to inc/decref, PyModule_Add steals a reference
+        _ = PyModule_Add_call(
+            mb.module._obj_ptr,
+            "tok_name".as_c_string_slice().ptr().as_unsafe_any_origin(),
+            tok_name,
+        )
 
         return mb.finalize()
     except e:
