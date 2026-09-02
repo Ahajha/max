@@ -127,12 +127,12 @@ comptime PyModule_AddIntConstant = ExternalFunction[
     ) thin abi("C") -> c_int,
 ]
 
-comptime PyDict_SetItemString = ExternalFunction[
-    "PyDict_SetItemString",
-    # int PyDict_SetItemString(PyObject *p, const char *key, PyObject *val)
+comptime PyDict_SetItem = ExternalFunction[
+    "PyDict_SetItem",
+    # int PyDict_SetItem(PyObject *p, PyObject *key, PyObject *val)
     def(
         PyObjectPtr,
-        OptionalPointer[c_char, ImmutAnyOrigin],
+        PyObjectPtr,
         PyObjectPtr,
     ) thin abi("C") -> c_int,
 ]
@@ -153,6 +153,12 @@ comptime PyLong_FromLong = ExternalFunction[
     def(c_long) thin abi("C") -> PyObjectPtr,
 ]
 
+comptime PyUnicode_FromString = ExternalFunction[
+    "PyUnicode_FromString",
+    # PyObject *PyUnicode_FromString(const char *str)
+    def(OptionalPointer[c_char, ImmutAnyOrigin]) thin abi("C") -> PyObjectPtr,
+]
+
 
 @export
 def PyInit_token() abi("C") -> PythonObject:
@@ -162,14 +168,17 @@ def PyInit_token() abi("C") -> PythonObject:
         var PyModule_AddIntConstant_call: PyModule_AddIntConstant.type = (
             PyModule_AddIntConstant.load(cpython.lib.borrow())
         )
-        var PyDict_SetItemString_call: PyDict_SetItemString.type = (
-            PyDict_SetItemString.load(cpython.lib.borrow())
+        var PyDict_SetItem_call: PyDict_SetItem.type = PyDict_SetItem.load(
+            cpython.lib.borrow()
         )
         var PyModule_Add_call: PyModule_Add.type = PyModule_Add.load(
             cpython.lib.borrow()
         )
         var PyLong_FromLong_call: PyLong_FromLong.type = PyLong_FromLong.load(
             cpython.lib.borrow()
+        )
+        var PyUnicode_FromString_call: PyUnicode_FromString.type = (
+            PyUnicode_FromString.load(cpython.lib.borrow())
         )
 
         def add_int_constant(
@@ -265,14 +274,25 @@ def PyInit_token() abi("C") -> PythonObject:
 
         def set_tok_name(
             name: StaticString, value: c_long
-        ) {mut tok_name, PyDict_SetItemString_call, PyLong_FromLong_call}:
-            var value_obj = PyLong_FromLong_call(value)
-            _ = PyDict_SetItemString_call(
+        ) {
+            mut tok_name,
+            cpython,
+            PyDict_SetItem_call,
+            PyLong_FromLong_call,
+            PyUnicode_FromString_call,
+        }:
+            var key_obj = PyLong_FromLong_call(value)
+            var value_obj = PyUnicode_FromString_call(
+                name.as_c_string_slice().ptr().as_unsafe_any_origin()
+            )
+            _ = PyDict_SetItem_call(
                 tok_name,
-                name.as_c_string_slice().ptr().as_unsafe_any_origin(),
+                key_obj,
                 value_obj,
             )
-            # TODO: PyDict_SetItemString does _not_ steal a reference, so we must decref here.
+            # PyDict_SetItem does _not_ steal a reference to val, so we must decref here.
+            # I'm not sure if it steals a reference to key.
+            cpython.Py_DecRef(value_obj)
 
         set_tok_name("ENDMARKER", ENDMARKER)
         set_tok_name("NAME", NAME)
