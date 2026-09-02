@@ -11,11 +11,28 @@ mojo_shared_library(
     ],
 )
 
+mojo_shared_library(
+    name = "grammar",
+    srcs = [
+        "grammar.mojo",
+        # Actually a dep, revisit
+        "token.mojo",
+    ],
+    shared_lib_name = "grammar.so",
+    tags = ["manual"],
+    deps = [
+        "@mojo//:std",
+    ],
+)
+
 modular_py_library(
     name = "token_lib",
-    data = [":token"],
+    data = [
+        ":grammar",
+        ":token",
+    ],
     imports = ["../.."],
-    pyi_srcs = ["token.pyi"],
+    pyi_srcs = glob(["*.pyi"]),
 )
 
 filegroup(

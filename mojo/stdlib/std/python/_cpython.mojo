@@ -61,6 +61,7 @@ comptime Py_func_type_input: c_int = 345
 # 0 when Stackless Python is disabled
 # ref: https://github.com/python/cpython/blob/main/Include/object.h
 comptime Py_TPFLAGS_DEFAULT = 0
+comptime Py_TPFLAGS_BASETYPE = 1 << 10
 
 # These flags are used to determine if a type is a subclass.
 # ref: https://github.com/python/cpython/blob/main/Include/object.h
