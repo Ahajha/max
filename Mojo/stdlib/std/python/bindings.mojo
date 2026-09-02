@@ -33,6 +33,7 @@ from std.python import Python, PythonObject
 from std.python._cpython import (
     GILAcquired,
     Py_TPFLAGS_DEFAULT,
+    Py_TPFLAGS_BASETYPE,
     Py_ssize_t,
     PyCFunction,
     PyCFunctionFast,
@@ -679,7 +680,7 @@ struct PythonTypeBuilder(Copyable):
             self.type_name.as_c_string_slice(),
             c_int(self.basicsize),
             0,
-            Py_TPFLAGS_DEFAULT,
+            Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
             # Note: This pointer is only "read-only" by PyType_FromSpec.
             slots.unsafe_ptr().unsafe_origin_cast[MutUntrackedOrigin](),
         )

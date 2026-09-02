@@ -268,8 +268,6 @@ def PyInit_token() abi("C") -> PythonObject:
         add_int_constant("GENERATOR_TYPE", GENERATOR_TYPE)
         add_int_constant("NT_OFFSET", NT_OFFSET)
 
-        # Progress! Now we need `tok_name`
-
         var tok_name = cpython.PyDict_New()
 
         def set_tok_name(
