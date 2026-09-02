@@ -35,15 +35,13 @@ This provides a high-level interface to parse a file into a syntax tree.
 
 __author__ = "Guido van Rossum <guido@python.org>"
 
-__all__ = ["Driver", "load_grammar"]
+__all__ = ["Driver"]
 
 # Python imports
 import io
 import logging
 import os
-import pkgutil
 import re
-import sys
 from collections.abc import Iterable, Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass, field
@@ -55,7 +53,7 @@ from mblib2to3.pgen2.pytree import NL
 from mblib2to3.pgen2.tokenize import GoodTokenInfo
 
 # Pgen imports
-from . import grammar, parse, pgen, token, tokenize
+from . import grammar, parse, token, tokenize
 
 Path = Union[str, "os.PathLike[str]"]
 
@@ -664,98 +662,3 @@ class Driver:
                 # indent is finished
                 wait_for_nl = True
         return "".join(lines), current_line
-
-
-def _generate_pickle_name(gt: Path, cache_dir: Path | None = None) -> str:
-    head, tail = os.path.splitext(gt)
-    if tail == ".txt":
-        tail = ""
-    name = head + tail + ".".join(map(str, sys.version_info)) + ".pickle"
-    if cache_dir:
-        return os.path.join(cache_dir, os.path.basename(name))
-    else:
-        return name
-
-
-def load_grammar(
-    gt: str = "Grammar.txt",
-    gp: str | None = None,
-    save: bool = True,
-    force: bool = False,
-    logger: Logger | None = None,
-) -> Grammar:
-    """Load the grammar (maybe from a pickle)."""
-    if logger is None:
-        logger = logging.getLogger(__name__)
-    gp = _generate_pickle_name(gt) if gp is None else gp
-    if force or not _newer(gp, gt):
-        g: grammar.Grammar = pgen.generate_grammar(gt)
-        if save:
-            try:
-                g.dump(gp)
-            except OSError:
-                # Ignore error, caching is not vital.
-                pass
-    else:
-        g = grammar.Grammar()
-        g.load(gp)
-    return g
-
-
-def _newer(a: str, b: str) -> bool:
-    """Inquire whether file a was written since file b.
-
-    Uses max(mtime, ctime) to handle the case where package installers
-    preserve the original build-time mtime when extracting files. The
-    ctime (inode change time) reflects the actual installation time.
-    """
-    if not os.path.exists(a):
-        return False
-    if not os.path.exists(b):
-        return True
-    a_time = max(os.path.getmtime(a), os.path.getctime(a))
-    b_time = max(os.path.getmtime(b), os.path.getctime(b))
-    return a_time > b_time
-
-
-def load_packaged_grammar(
-    package: str, grammar_source: str, cache_dir: Path | None = None
-) -> grammar.Grammar:
-    """Normally, loads a pickled grammar by doing
-        pkgutil.get_data(package, pickled_grammar)
-    where *pickled_grammar* is computed from *grammar_source* by adding the
-    Python version and using a ``.pickle`` extension.
-
-    However, if *grammar_source* is an extant file, load_grammar(grammar_source)
-    is called instead. This facilitates using a packaged grammar file when needed
-    but preserves load_grammar's automatic regeneration behavior when possible.
-
-    """
-    if os.path.isfile(grammar_source):
-        gp = (
-            _generate_pickle_name(grammar_source, cache_dir)
-            if cache_dir
-            else None
-        )
-        # Fix MOTO-1264: Force grammar regeneration to prevent stale cache issues
-        # Always force regeneration when no cache directory is specified (development mode)
-        force_regen = gp is None
-
-        # Clean up any existing pickle files in source directory to force regeneration
-        if gp is None:
-            default_pickle = _generate_pickle_name(grammar_source)
-            if os.path.exists(default_pickle):
-                try:
-                    os.remove(default_pickle)
-                except OSError:
-                    pass  # Ignore errors if we can't remove it
-
-        return load_grammar(grammar_source, gp=gp, force=force_regen)
-    pickled_name = _generate_pickle_name(
-        os.path.basename(grammar_source), cache_dir
-    )
-    data = pkgutil.get_data(package, pickled_name)
-    assert data is not None
-    g = grammar.Grammar()
-    g.loads(data)
-    return g
