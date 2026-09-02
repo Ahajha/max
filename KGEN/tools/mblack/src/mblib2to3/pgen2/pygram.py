@@ -30,7 +30,7 @@ import os
 from typing import Union
 
 # Local imports
-from . import driver
+from . import pgen
 from .grammar import Grammar
 
 # Moved into initialize because mypyc can't handle __file__ (XXX bug)
@@ -212,9 +212,7 @@ def initialize(cache_dir: Union[str, "os.PathLike[str]", None] = None) -> None:
     )
 
     # Python 2
-    python_grammar = driver.load_packaged_grammar(
-        "mblib2to3", _GRAMMAR_FILE, cache_dir
-    )
+    python_grammar = pgen.generate_grammar(_GRAMMAR_FILE)
     python_grammar.version = (2, 0)
 
     soft_keywords = python_grammar.soft_keywords.copy()
@@ -258,7 +256,5 @@ def initialize(cache_dir: Union[str, "os.PathLike[str]", None] = None) -> None:
     ]
     mojo_grammar.version = (0, 1)
 
-    pattern_grammar = driver.load_packaged_grammar(
-        "mblib2to3", _PATTERN_GRAMMAR_FILE, cache_dir
-    )
+    pattern_grammar = pgen.generate_grammar(_PATTERN_GRAMMAR_FILE)
     pattern_symbols = _pattern_symbols(pattern_grammar)

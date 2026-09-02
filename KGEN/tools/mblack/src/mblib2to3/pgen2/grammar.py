@@ -36,9 +36,7 @@ fallback token code OP, but the parser needs the actual token code.
 
 # Python imports
 import os
-import pickle
-import tempfile
-from typing import Any, TypeVar, Union
+from typing import TypeVar, Union
 
 # Local imports
 from . import token
@@ -123,37 +121,6 @@ class Grammar:
         # Keywords that introduce a named declaration that can use a keyword
         # as a name, e.g. `def struct()`.
         self.declaration_keywords: list[str] = []
-
-    def dump(self, filename: Path) -> None:
-        """Dump the grammar tables to a pickle file."""
-
-        # mypyc generates objects that don't have a __dict__, but they
-        # do have __getstate__ methods that will return an equivalent
-        # dictionary
-        if hasattr(self, "__dict__"):
-            d = self.__dict__
-        else:
-            d = self.__getstate__()  # type: ignore
-
-        with tempfile.NamedTemporaryFile(
-            dir=os.path.dirname(filename), delete=False
-        ) as f:
-            pickle.dump(d, f, pickle.HIGHEST_PROTOCOL)
-        os.replace(f.name, filename)
-
-    def _update(self, attrs: dict[str, Any]) -> None:
-        for k, v in attrs.items():
-            setattr(self, k, v)
-
-    def load(self, filename: Path) -> None:
-        """Load the grammar tables from a pickle file."""
-        with open(filename, "rb") as f:
-            d = pickle.load(f)
-        self._update(d)
-
-    def loads(self, pkl: bytes) -> None:
-        """Load the grammar tables from a pickle bytes object."""
-        self._update(pickle.loads(pkl))
 
     def copy(self: _P) -> _P:
         """
