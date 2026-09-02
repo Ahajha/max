@@ -35,8 +35,7 @@ fallback token code OP, but the parser needs the actual token code.
 """
 
 # Python imports
-import os
-from typing import TypeVar, Union
+from typing import TypeVar
 
 # Local imports
 from . import token
@@ -45,7 +44,7 @@ _P = TypeVar("_P", bound="Grammar")
 Label = tuple[int, str | None]
 DFA = list[list[tuple[int, int]]]
 DFAS = tuple[DFA, dict[int, int]]
-Path = Union[str, "os.PathLike[str]"]
+Path = str
 
 
 class Grammar:
@@ -146,78 +145,56 @@ class Grammar:
         new.declaration_keywords = self.declaration_keywords
         return new
 
-    def report(self) -> None:
-        """Dump the grammar tables to standard output, for debugging."""
-        from pprint import pprint
-
-        print("s2n")
-        pprint(self.symbol2number)
-        print("n2s")
-        pprint(self.number2symbol)
-        print("states")
-        pprint(self.states)
-        print("dfas")
-        pprint(self.dfas)
-        print("labels")
-        pprint(self.labels)
-        print("start", self.start)
-
 
 # Map from operator to number (since tokenize doesn't do this)
 
-opmap_raw = """
-( LPAR
-) RPAR
-[ LSQB
-] RSQB
-: COLON
-, COMMA
-; SEMI
-+ PLUS
-- MINUS
-* STAR
-/ SLASH
-| VBAR
-& AMPER
-< LESS
-> GREATER
-= EQUAL
-. DOT
-% PERCENT
-` BACKQUOTE
-{ LBRACE
-} RBRACE
-@ AT
-@= ATEQUAL
-== EQEQUAL
-!= NOTEQUAL
-<> NOTEQUAL
-<= LESSEQUAL
->= GREATEREQUAL
-~ TILDE
-^ CIRCUMFLEX
-<< LEFTSHIFT
->> RIGHTSHIFT
-** DOUBLESTAR
-+= PLUSEQUAL
--= MINEQUAL
-*= STAREQUAL
-/= SLASHEQUAL
-%= PERCENTEQUAL
-&= AMPEREQUAL
-|= VBAREQUAL
-^= CIRCUMFLEXEQUAL
-<<= LEFTSHIFTEQUAL
->>= RIGHTSHIFTEQUAL
-**= DOUBLESTAREQUAL
-// DOUBLESLASH
-//= DOUBLESLASHEQUAL
--> RARROW
-:= COLONEQUAL
-"""
-
-opmap = {}
-for line in opmap_raw.splitlines():
-    if line:
-        op, name = line.split()
-        opmap[op] = getattr(token, name)
+opmap = {
+    "(": token.LPAR,
+    ")": token.RPAR,
+    "[": token.LSQB,
+    "]": token.RSQB,
+    ":": token.COLON,
+    ",": token.COMMA,
+    ";": token.SEMI,
+    "+": token.PLUS,
+    "-": token.MINUS,
+    "*": token.STAR,
+    "/": token.SLASH,
+    "|": token.VBAR,
+    "&": token.AMPER,
+    "<": token.LESS,
+    ">": token.GREATER,
+    "=": token.EQUAL,
+    ".": token.DOT,
+    "%": token.PERCENT,
+    "`": token.BACKQUOTE,
+    "{": token.LBRACE,
+    "}": token.RBRACE,
+    "@": token.AT,
+    "@=": token.ATEQUAL,
+    "==": token.EQEQUAL,
+    "!=": token.NOTEQUAL,
+    "<>": token.NOTEQUAL,
+    "<=": token.LESSEQUAL,
+    ">=": token.GREATEREQUAL,
+    "~": token.TILDE,
+    "^": token.CIRCUMFLEX,
+    "<<": token.LEFTSHIFT,
+    ">>": token.RIGHTSHIFT,
+    "**": token.DOUBLESTAR,
+    "+=": token.PLUSEQUAL,
+    "-=": token.MINEQUAL,
+    "*=": token.STAREQUAL,
+    "/=": token.SLASHEQUAL,
+    "%=": token.PERCENTEQUAL,
+    "&=": token.AMPEREQUAL,
+    "|=": token.VBAREQUAL,
+    "^=": token.CIRCUMFLEXEQUAL,
+    "<<=": token.LEFTSHIFTEQUAL,
+    ">>=": token.RIGHTSHIFTEQUAL,
+    "**=": token.DOUBLESTAREQUAL,
+    "//": token.DOUBLESLASH,
+    "//=": token.DOUBLESLASHEQUAL,
+    "->": token.RARROW,
+    ":=": token.COLONEQUAL,
+}
