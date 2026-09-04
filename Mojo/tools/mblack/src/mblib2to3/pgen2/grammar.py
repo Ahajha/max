@@ -137,7 +137,6 @@ class Grammar:
         ):
             setattr(new, dict_attr, getattr(self, dict_attr).copy())
         new.labels = self.labels[:]
-        new.states = self.states[:]
         new.start = self.start
         new.version = self.version
         new.async_keywords = self.async_keywords

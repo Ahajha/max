@@ -86,7 +86,6 @@ class ParserGenerator:
                 if state.isfinal:
                     arcs.append((0, dfa.index(state)))
                 states.append(arcs)
-            c.states.append(states)
             c.dfas[c.symbol2number[name]] = (states, self.make_first(c, name))
         c.start = c.symbol2number[self.startsymbol]
         return c
