@@ -100,6 +100,4 @@ def f(x):
     assert_format(
         source,
         expected,
-        mblack.Mode(target_versions={mblack.TargetVersion.PY310}),
-        minimum_version=(3, 10),
     )

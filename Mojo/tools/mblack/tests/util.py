@@ -229,7 +229,7 @@ def assert_format(
     mode: mblack.Mode = DEFAULT_MODE,
     *,
     fast: bool = False,
-    minimum_version: Optional[Tuple[int, int]] = None,
+    # minimum_version: Optional[Tuple[int, int]] = None,
 ) -> None:
     """Convenience function to check that Black formats as expected.
 
@@ -246,8 +246,7 @@ def assert_format(
         # Unfortunately the AST equivalence check relies on the built-in ast module
         # being able to parse the code being formatted. This doesn't always work out
         # when checking modern code on older versions.
-        if minimum_version is None or sys.version_info >= minimum_version:
-            mblack.assert_equivalent(source, actual)
+        mblack.assert_equivalent(source, actual)
         mblack.assert_stable(source, actual, mode=mode)
 
 

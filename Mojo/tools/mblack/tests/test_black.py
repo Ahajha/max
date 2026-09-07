@@ -72,7 +72,6 @@ from tests.util import (
     DEFAULT_MODE,
     DETERMINISTIC_HEADER,
     PROJECT_ROOT,
-    PY36_VERSIONS,
     THIS_DIR,
     BlackBaseTestCase,
     assert_format,
@@ -87,7 +86,6 @@ from tests.util import (
 
 THIS_FILE = Path(__file__)
 EMPTY_CONFIG = THIS_DIR / "data/empty_pyproject.toml"
-PY36_ARGS = [f"--target-version={version.name.lower()}" for version in PY36_VERSIONS]
 DEFAULT_EXCLUDE = mblack.re_compile_maybe_verbose(mblack.const.DEFAULT_EXCLUDES)
 DEFAULT_INCLUDE = mblack.re_compile_maybe_verbose(mblack.const.DEFAULT_INCLUDES)
 T = TypeVar("T")
@@ -432,7 +430,7 @@ class BlackTestCase(BlackBaseTestCase):
             mblack.assert_equivalent(source, actual)
         mblack.assert_stable(source, actual, DEFAULT_MODE)
         # we cannot parse this, because async/await is not a valid identifier
-        self.invokeBlack([str(source_path), "--target-version", "py37"], exit_code=123)
+        self.invokeBlack([str(source_path)], exit_code=123)
 
     @patch("mblack.dump_to_file", dump_to_stderr)
     def test_python37(self) -> None:
@@ -445,7 +443,7 @@ class BlackTestCase(BlackBaseTestCase):
             mblack.assert_equivalent(source, actual)
         mblack.assert_stable(source, actual, DEFAULT_MODE)
         # ensure black can parse this when the target is 3.7
-        self.invokeBlack([str(source_path), "--target-version", "py37"])
+        self.invokeBlack([str(source_path)])
 
     def test_tab_comment_indentation(self) -> None:
         contents_tab = "if 1:\n\tif 2:\n\t\tpass\n\t# comment\n\tpass\n"
@@ -991,60 +989,6 @@ class BlackTestCase(BlackBaseTestCase):
         actual = result.output
         self.assertFormatEqual(actual, expected)
 
-    def test_single_file_force_py36(self) -> None:
-        reg_mode = DEFAULT_MODE
-        py36_mode = replace(DEFAULT_MODE, target_versions=PY36_VERSIONS)
-        source, expected = read_data("miscellaneous", "force_py36")
-        with cache_dir() as workspace:
-            path = (workspace / "file.mojo").resolve()
-            with open(path, "w") as fh:
-                fh.write(source)
-            self.invokeBlack([str(path), *PY36_ARGS])
-            with open(path, "r") as fh:
-                actual = fh.read()
-            # verify cache with --target-version is separate
-            py36_cache = mblack.read_cache(py36_mode)
-            self.assertIn(str(path), py36_cache)
-            normal_cache = mblack.read_cache(reg_mode)
-            self.assertNotIn(str(path), normal_cache)
-        self.assertEqual(actual, expected)
-
-    @event_loop()
-    def test_multi_file_force_py36(self) -> None:
-        reg_mode = DEFAULT_MODE
-        py36_mode = replace(DEFAULT_MODE, target_versions=PY36_VERSIONS)
-        source, expected = read_data("miscellaneous", "force_py36")
-        with cache_dir() as workspace:
-            paths = [
-                (workspace / "file1.mojo").resolve(),
-                (workspace / "file2.mojo").resolve(),
-            ]
-            for path in paths:
-                with open(path, "w") as fh:
-                    fh.write(source)
-            self.invokeBlack([str(p) for p in paths] + PY36_ARGS)
-            for path in paths:
-                with open(path, "r") as fh:
-                    actual = fh.read()
-                self.assertEqual(actual, expected)
-            # verify cache with --target-version is separate
-            pyi_cache = mblack.read_cache(py36_mode)
-            normal_cache = mblack.read_cache(reg_mode)
-            for path in paths:
-                self.assertIn(str(path), pyi_cache)
-                self.assertNotIn(str(path), normal_cache)
-
-    def test_pipe_force_py36(self) -> None:
-        source, expected = read_data("miscellaneous", "force_py36")
-        result = CliRunner().invoke(
-            mblack.main,
-            ["-", "-q", "--target-version=py36"],
-            input=BytesIO(source.encode("utf8")),
-        )
-        self.assertEqual(result.exit_code, 0)
-        actual = result.output
-        self.assertFormatEqual(actual, expected)
-
     # @pytest.mark.incompatible_with_mypyc
     def test_reformat_one_with_stdin(self) -> None:
         with patch(
@@ -1360,7 +1304,6 @@ class BlackTestCase(BlackBaseTestCase):
         self.assertEqual(config["diff"], "y")
         self.assertEqual(config["color"], True)
         self.assertEqual(config["line_length"], 79)
-        self.assertEqual(config["target_version"], ["py36", "py37", "py38"])
         self.assertEqual(config["python_cell_magics"], ["custom1", "custom2"])
         self.assertEqual(config["exclude"], r"\.pyi?$")
         self.assertEqual(config["include"], r"\.py?$")
@@ -1375,7 +1318,6 @@ class BlackTestCase(BlackBaseTestCase):
         self.assertEqual(config["diff"], "y")
         self.assertEqual(config["color"], "True")
         self.assertEqual(config["line_length"], "79")
-        self.assertEqual(config["target_version"], ["py36", "py37", "py38"])
         self.assertEqual(config["exclude"], r"\.pyi?$")
         self.assertEqual(config["include"], r"\.py?$")
 

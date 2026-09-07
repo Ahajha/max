@@ -71,14 +71,14 @@ def test_preview_format(filename: str) -> None:
 def test_preview_minimum_python_39_format(filename: str) -> None:
     source, expected = read_data("preview_39", filename)
     mode = mblack.Mode(preview=True)
-    assert_format(source, expected, mode, minimum_version=(3, 9))
+    assert_format(source, expected, mode)
 
 
 @pytest.mark.parametrize("filename", all_data_cases("preview_310"))
 def test_preview_minimum_python_310_format(filename: str) -> None:
     source, expected = read_data("preview_310", filename)
     mode = mblack.Mode(preview=True)
-    assert_format(source, expected, mode, minimum_version=(3, 10))
+    assert_format(source, expected, mode)
 
 
 # =============== #
@@ -94,50 +94,50 @@ def test_empty() -> None:
 @pytest.mark.parametrize("filename", all_data_cases("py_36"))
 def test_python_36(filename: str) -> None:
     source, expected = read_data("py_36", filename)
-    mode = mblack.Mode(target_versions=PY36_VERSIONS)
-    assert_format(source, expected, mode, minimum_version=(3, 6))
+    mode = mblack.Mode()
+    assert_format(source, expected, mode)
 
 
 @pytest.mark.parametrize("filename", all_data_cases("py_37"))
 def test_python_37(filename: str) -> None:
     source, expected = read_data("py_37", filename)
-    mode = mblack.Mode(target_versions={mblack.TargetVersion.PY37})
-    assert_format(source, expected, mode, minimum_version=(3, 7))
+    mode = mblack.Mode()
+    assert_format(source, expected, mode)
 
 
 @pytest.mark.parametrize("filename", all_data_cases("py_38"))
 def test_python_38(filename: str) -> None:
     source, expected = read_data("py_38", filename)
-    mode = mblack.Mode(target_versions={mblack.TargetVersion.PY38})
-    assert_format(source, expected, mode, minimum_version=(3, 8))
+    mode = mblack.Mode()
+    assert_format(source, expected, mode)
 
 
 @pytest.mark.parametrize("filename", all_data_cases("py_39"))
 def test_python_39(filename: str) -> None:
     source, expected = read_data("py_39", filename)
-    mode = mblack.Mode(target_versions={mblack.TargetVersion.PY39})
-    assert_format(source, expected, mode, minimum_version=(3, 9))
+    mode = mblack.Mode()
+    assert_format(source, expected, mode)
 
 
 @pytest.mark.parametrize("filename", all_data_cases("py_310"))
 def test_python_310(filename: str) -> None:
     source, expected = read_data("py_310", filename)
-    mode = mblack.Mode(target_versions={mblack.TargetVersion.PY310})
-    assert_format(source, expected, mode, minimum_version=(3, 10))
+    mode = mblack.Mode()
+    assert_format(source, expected, mode)
 
 
 @pytest.mark.parametrize("filename", all_data_cases("py_310"))
 def test_python_310_without_target_version(filename: str) -> None:
     source, expected = read_data("py_310", filename)
     mode = mblack.Mode()
-    assert_format(source, expected, mode, minimum_version=(3, 10))
+    assert_format(source, expected, mode)
 
 
 def test_patma_invalid() -> None:
     source, expected = read_data("miscellaneous", "pattern_matching_invalid")
-    mode = mblack.Mode(target_versions={mblack.TargetVersion.PY310})
+    mode = mblack.Mode()
     with pytest.raises(mblack.parsing.InvalidInput) as exc_info:
-        assert_format(source, expected, mode, minimum_version=(3, 10))
+        assert_format(source, expected, mode)
 
     exc_info.match("Cannot parse: 10:11")
 
@@ -145,8 +145,8 @@ def test_patma_invalid() -> None:
 @pytest.mark.parametrize("filename", all_data_cases("py_311"))
 def test_python_311(filename: str) -> None:
     source, expected = read_data("py_311", filename)
-    mode = mblack.Mode(target_versions={mblack.TargetVersion.PY311})
-    assert_format(source, expected, mode, minimum_version=(3, 11))
+    mode = mblack.Mode()
+    assert_format(source, expected, mode)
 
 
 @pytest.mark.parametrize("filename", all_data_cases("fast"))
