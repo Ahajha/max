@@ -26,7 +26,7 @@ Parse Python code and perform AST validation.
 
 import ast
 import sys
-from collections.abc import Iterable, Iterator
+from collections.abc import Iterator
 from typing import Final
 
 from mblib2to3 import pygram
@@ -36,7 +36,6 @@ from mblib2to3.pgen2.parse import ParseError
 from mblib2to3.pgen2.tokenize import TokenError
 from mblib2to3.pytree import Leaf, Node
 
-from mblack.mode import Feature, TargetVersion, supports_feature
 from mblack.nodes import syms
 
 PY2_HINT: Final = "Python 2 support was removed in version 22.0."
@@ -44,43 +43,6 @@ PY2_HINT: Final = "Python 2 support was removed in version 22.0."
 
 class InvalidInput(ValueError):
     """Raised when input source code fails all parse attempts."""
-
-
-def get_grammars(target_versions: set[TargetVersion]) -> list[Grammar]:
-    if not target_versions:
-        # No target_version specified, so try all grammars.
-        return [
-            # Python 3.7+
-            pygram.python_grammar_no_print_statement_no_exec_statement_async_keywords,
-            # Python 3.0-3.6
-            pygram.python_grammar_no_print_statement_no_exec_statement,
-            # Python 3.10+
-            pygram.python_grammar_soft_keywords,
-        ]
-    if TargetVersion.MOJO in target_versions:
-        return [pygram.mojo_grammar]
-
-    grammars = []
-    # If we have to parse both, try to parse async as a keyword first
-    if not supports_feature(
-        target_versions, Feature.ASYNC_IDENTIFIERS
-    ) and not supports_feature(target_versions, Feature.PATTERN_MATCHING):
-        # Python 3.7-3.9
-        grammars.append(
-            pygram.python_grammar_no_print_statement_no_exec_statement_async_keywords
-        )
-    if not supports_feature(target_versions, Feature.ASYNC_KEYWORDS):
-        # Python 3.0-3.6
-        grammars.append(
-            pygram.python_grammar_no_print_statement_no_exec_statement
-        )
-    if supports_feature(target_versions, Feature.PATTERN_MATCHING):
-        # Python 3.10+
-        grammars.append(pygram.python_grammar_soft_keywords)
-
-    # At least one of the above branches must have been taken, because every Python
-    # version has exactly one of the two 'ASYNC_*' flags
-    return grammars
 
 
 def _leading_spaces(line: str) -> int:
@@ -112,14 +74,12 @@ def _parse_error_hint(pe: ParseError, lines: list[str], lineno: int) -> str:
     return ""
 
 
-def lib2to3_parse(
-    src_txt: str, target_versions: Iterable[TargetVersion] = ()
-) -> Node:
+def lib2to3_parse(src_txt: str) -> Node:
     """Given a string with source, return the lib2to3 Node."""
     if not src_txt.endswith("\n"):
         src_txt += "\n"
 
-    grammars = get_grammars(set(target_versions))
+    grammars = [pygram.mojo_grammar]
     errors = {}
     for grammar in grammars:
         drv = driver.Driver(grammar)

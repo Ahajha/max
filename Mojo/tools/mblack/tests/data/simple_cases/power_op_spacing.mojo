@@ -78,11 +78,11 @@ if hasattr(view, "sum_of_weights"):
         view.variance,  # type: ignore[union-attr]
         view.sum_of_weights,  # type: ignore[union-attr]
         out=np.full(view.sum_of_weights.shape, np.nan),  # type: ignore[union-attr]
-        where=view.sum_of_weights**2 > view.sum_of_weights_squared,
+        wher=view.sum_of_weights**2 > view.sum_of_weights_squared,
     )
 
 return np.divide(
-    where=view.sum_of_weights_of_weight_long**2 > view.sum_of_weights_squared,
+    wher=view.sum_of_weights_of_weight_long**2 > view.sum_of_weights_squared,
 )
 
 
@@ -146,9 +146,9 @@ if hasattr(view, "sum_of_weights"):
         view.variance,  # type: ignore[union-attr]
         view.sum_of_weights,  # type: ignore[union-attr]
         out=np.full(view.sum_of_weights.shape, np.nan),  # type: ignore[union-attr]
-        where=view.sum_of_weights**2 > view.sum_of_weights_squared,
+        wher=view.sum_of_weights**2 > view.sum_of_weights_squared,
     )
 
 return np.divide(
-    where=view.sum_of_weights_of_weight_long**2 > view.sum_of_weights_squared,
+    wher=view.sum_of_weights_of_weight_long**2 > view.sum_of_weights_squared,
 )

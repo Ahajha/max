@@ -171,12 +171,6 @@ def read_pyproject_toml(
             for k, v in config.items()
         }
 
-    target_version = config.get("target_version")
-    if target_version is not None and not isinstance(target_version, list):
-        raise click.BadOptionUsage(
-            "target-version", "Config key target-version must be a list"
-        )
-
     default_map: dict[str, Any] = {}
     if ctx.default_map:
         default_map.update(ctx.default_map)
@@ -1197,7 +1191,7 @@ def format_str(src_contents: str, *, mode: Mode) -> str:
 
 
 def _format_str_once(src_contents: str, *, mode: Mode) -> str:
-    src_node = lib2to3_parse(src_contents.lstrip(), mode.target_versions)
+    src_node = lib2to3_parse(src_contents.lstrip())
     dst_blocks: list[LinesBlock] = []
     if mode.target_versions:
         versions = mode.target_versions

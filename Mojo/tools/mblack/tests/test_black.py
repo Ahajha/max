@@ -1599,7 +1599,7 @@ class BlackTestCase(BlackBaseTestCase):
         Test that an unexpected EOF SyntaxError is nicely presented.
         """
         with pytest.raises(mblack.parsing.InvalidInput) as exc_info:
-            mblack.lib2to3_parse("print(", {})
+            mblack.lib2to3_parse("print(")
 
         exc_info.match("Cannot parse: 2:0: EOF in multi-line statement")
 
