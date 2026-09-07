@@ -29,7 +29,6 @@ chosen by the user.
 from dataclasses import dataclass, field
 from enum import Enum, auto
 from hashlib import sha256
-from operator import attrgetter
 from warnings import warn
 
 from mblack.const import DEFAULT_LINE_LENGTH
@@ -108,17 +107,7 @@ class Mode:
         return self.preview
 
     def get_cache_key(self) -> str:
-        if self.target_versions:
-            version_str = ",".join(
-                str(version.value)
-                for version in sorted(
-                    self.target_versions, key=attrgetter("value")
-                )
-            )
-        else:
-            version_str = "-"
         parts = [
-            version_str,
             str(self.line_length),
             str(int(self.string_normalization)),
             str(int(self.is_pyi)),
