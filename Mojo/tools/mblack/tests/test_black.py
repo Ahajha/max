@@ -278,21 +278,12 @@ class BlackTestCase(BlackBaseTestCase):
         mode = replace(
             DEFAULT_MODE,
             experimental_string_processing=False,
-            target_versions={mblack.TargetVersion.PY38},
         )
         actual = fs(source, mode=mode)
         sys.settrace(None)
         self.assertFormatEqual(expected, actual)
         mblack.assert_equivalent(source, actual)
         mblack.assert_stable(source, actual, mblack.FileMode())
-
-    def test_pep_572_version_detection(self) -> None:
-        source, _ = read_data("py_38", "pep_572")
-        root = mblack.lib2to3_parse(source)
-        features = mblack.get_features_used(root)
-        self.assertIn(mblack.Feature.ASSIGNMENT_EXPRESSIONS, features)
-        versions = mblack.detect_target_versions(root)
-        self.assertIn(mblack.TargetVersion.PY38, versions)
 
     def test_expression_ff(self) -> None:
         source, expected = read_data("simple_cases", "expression.mojo")
@@ -361,33 +352,6 @@ class BlackTestCase(BlackBaseTestCase):
         self.assertIn("\033[31m", actual)
         self.assertIn("\033[0m", actual)
 
-    def test_detect_pos_only_arguments(self) -> None:
-        source, _ = read_data("py_38", "pep_570")
-        root = mblack.lib2to3_parse(source)
-        features = mblack.get_features_used(root)
-        self.assertIn(mblack.Feature.POS_ONLY_ARGUMENTS, features)
-        versions = mblack.detect_target_versions(root)
-        self.assertIn(mblack.TargetVersion.PY38, versions)
-
-    def test_detect_debug_f_strings(self) -> None:
-        root = mblack.lib2to3_parse("""f"{x=}" """)
-        features = mblack.get_features_used(root)
-        self.assertIn(mblack.Feature.DEBUG_F_STRINGS, features)
-        versions = mblack.detect_target_versions(root)
-        self.assertIn(mblack.TargetVersion.PY38, versions)
-
-        root = mblack.lib2to3_parse(
-            """f"{x}"\nf'{"="}'\nf'{(x:=5)}'\nf'{f(a="3=")}'\nf'{x:=10}'\n"""
-        )
-        features = mblack.get_features_used(root)
-        self.assertNotIn(mblack.Feature.DEBUG_F_STRINGS, features)
-
-        # We don't yet support feature version detection in nested f-strings
-        root = mblack.lib2to3_parse(
-            """f"heard a rumour that { f'{1+1=}' } ... seems like it could be true" """
-        )
-        features = mblack.get_features_used(root)
-        self.assertNotIn(mblack.Feature.DEBUG_F_STRINGS, features)
 
     @patch("mblack.dump_to_file", dump_to_stderr)
     def test_string_quotes(self) -> None:
@@ -810,139 +774,14 @@ class BlackTestCase(BlackBaseTestCase):
 
         straddling = "x + y"
         mblack.lib2to3_parse(straddling)
-        mblack.lib2to3_parse(straddling, {TargetVersion.PY36})
 
         py2_only = "print x"
         with self.assertRaises(mblack.InvalidInput):
-            mblack.lib2to3_parse(py2_only, {TargetVersion.PY36})
+            mblack.lib2to3_parse(py2_only)
 
         py3_only = "exec(x, end=y)"
         mblack.lib2to3_parse(py3_only)
-        mblack.lib2to3_parse(py3_only, {TargetVersion.PY36})
 
-    def test_get_features_used_decorator(self) -> None:
-        # Test the feature detection of new decorator syntax
-        # since this makes some test cases of test_get_features_used()
-        # fails if it fails, this is tested first so that a useful case
-        # is identified
-        simples, relaxed = read_data("miscellaneous", "decorators")
-        # skip explanation comments at the top of the file
-        for simple_test in simples.split("##")[1:]:
-            node = mblack.lib2to3_parse(simple_test)
-            decorator = str(node.children[0].children[0]).strip()
-            self.assertNotIn(
-                Feature.RELAXED_DECORATORS,
-                mblack.get_features_used(node),
-                msg=(
-                    f"decorator '{decorator}' follows python<=3.8 syntax"
-                    "but is detected as 3.9+"
-                    # f"The full node is\n{node!r}"
-                ),
-            )
-        # skip the '# output' comment at the top of the output part
-        for relaxed_test in relaxed.split("##")[1:]:
-            node = mblack.lib2to3_parse(relaxed_test)
-            decorator = str(node.children[0].children[0]).strip()
-            self.assertIn(
-                Feature.RELAXED_DECORATORS,
-                mblack.get_features_used(node),
-                msg=(
-                    f"decorator '{decorator}' uses python3.9+ syntax"
-                    "but is detected as python<=3.8"
-                    # f"The full node is\n{node!r}"
-                ),
-            )
-
-    def test_get_features_used(self) -> None:
-        node = mblack.lib2to3_parse("def f(*, arg): ...\n")
-        self.assertEqual(mblack.get_features_used(node), set())
-        node = mblack.lib2to3_parse("def f(*, arg,): ...\n")
-        self.assertEqual(mblack.get_features_used(node), {Feature.TRAILING_COMMA_IN_DEF})
-        node = mblack.lib2to3_parse("f(*arg,)\n")
-        self.assertEqual(
-            mblack.get_features_used(node), {Feature.TRAILING_COMMA_IN_CALL}
-        )
-        node = mblack.lib2to3_parse("def f(*, arg): f'string'\n")
-        self.assertEqual(mblack.get_features_used(node), {Feature.F_STRINGS})
-        node = mblack.lib2to3_parse("123_456\n")
-        self.assertEqual(mblack.get_features_used(node), {Feature.NUMERIC_UNDERSCORES})
-        node = mblack.lib2to3_parse("123456\n")
-        self.assertEqual(mblack.get_features_used(node), set())
-        source, expected = read_data("simple_cases", "function")
-        node = mblack.lib2to3_parse(source)
-        expected_features = {
-            Feature.TRAILING_COMMA_IN_CALL,
-            Feature.TRAILING_COMMA_IN_DEF,
-            Feature.F_STRINGS,
-        }
-        self.assertEqual(mblack.get_features_used(node), expected_features)
-        node = mblack.lib2to3_parse(expected)
-        self.assertEqual(mblack.get_features_used(node), expected_features)
-        source, expected = read_data("simple_cases", "expression")
-        node = mblack.lib2to3_parse(source)
-        self.assertEqual(mblack.get_features_used(node), set())
-        node = mblack.lib2to3_parse(expected)
-        self.assertEqual(mblack.get_features_used(node), set())
-        node = mblack.lib2to3_parse("lambda a, /, b: ...")
-        self.assertEqual(mblack.get_features_used(node), {Feature.POS_ONLY_ARGUMENTS})
-        node = mblack.lib2to3_parse("def fn(a, /, b): ...")
-        self.assertEqual(mblack.get_features_used(node), {Feature.POS_ONLY_ARGUMENTS})
-        # Mojo uses // (double slash) as the infer-only marker
-        node = mblack.lib2to3_parse("def foo(a, //, b): pass")
-        self.assertEqual(mblack.get_features_used(node), {Feature.POS_ONLY_ARGUMENTS})
-        node = mblack.lib2to3_parse("def fn(): yield a, b")
-        self.assertEqual(mblack.get_features_used(node), set())
-        node = mblack.lib2to3_parse("def fn(): return a, b")
-        self.assertEqual(mblack.get_features_used(node), set())
-        node = mblack.lib2to3_parse("def fn(): yield *b, c")
-        self.assertEqual(mblack.get_features_used(node), {Feature.UNPACKING_ON_FLOW})
-        node = mblack.lib2to3_parse("def fn(): return a, *b, c")
-        self.assertEqual(mblack.get_features_used(node), {Feature.UNPACKING_ON_FLOW})
-        node = mblack.lib2to3_parse("x = a, *b, c")
-        self.assertEqual(mblack.get_features_used(node), set())
-        node = mblack.lib2to3_parse("x: Any = regular")
-        self.assertEqual(mblack.get_features_used(node), set())
-        node = mblack.lib2to3_parse("x: Any = (regular, regular)")
-        self.assertEqual(mblack.get_features_used(node), set())
-        node = mblack.lib2to3_parse("x: Any = Complex(Type(1))[something]")
-        self.assertEqual(mblack.get_features_used(node), set())
-        node = mblack.lib2to3_parse("x: Tuple[int, ...] = a, b, c")
-        self.assertEqual(
-            mblack.get_features_used(node), {Feature.ANN_ASSIGN_EXTENDED_RHS}
-        )
-        node = mblack.lib2to3_parse("try: pass\nexcept Something: pass")
-        self.assertEqual(mblack.get_features_used(node), set())
-        node = mblack.lib2to3_parse("try: pass\nexcept (*Something,): pass")
-        self.assertEqual(mblack.get_features_used(node), set())
-        node = mblack.lib2to3_parse("try: pass\nexcept *Group: pass")
-        self.assertEqual(mblack.get_features_used(node), {Feature.EXCEPT_STAR})
-        node = mblack.lib2to3_parse("a[*b]")
-        self.assertEqual(mblack.get_features_used(node), {Feature.VARIADIC_GENERICS})
-        node = mblack.lib2to3_parse("a[x, *y(), z] = t")
-        self.assertEqual(mblack.get_features_used(node), {Feature.VARIADIC_GENERICS})
-        node = mblack.lib2to3_parse("def fn(*args: *T): pass")
-        self.assertEqual(mblack.get_features_used(node), {Feature.VARIADIC_GENERICS})
-
-    def test_get_features_used_for_future_flags(self) -> None:
-        for src, features in [
-            (
-                "from __future__ import annotations",
-                {Feature.FUTURE_ANNOTATIONS},
-            ),
-            (
-                "from __future__ import (other, annotations)",
-                {Feature.FUTURE_ANNOTATIONS},
-            ),
-            ("a = 1 + 2\nfrom something import annotations", set()),
-            ("from __future__ import x, y", set()),
-        ]:
-            with self.subTest(src=src, features=features):
-                node = mblack.lib2to3_parse(src)
-                future_imports = mblack.get_future_imports(node)
-                self.assertEqual(
-                    mblack.get_features_used(node, future_imports=future_imports),
-                    features,
-                )
 
     def test_get_future_imports(self) -> None:
         node = mblack.lib2to3_parse("\n")

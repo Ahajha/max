@@ -138,7 +138,7 @@ call(
     another,
     kwarg="hey",
     **kwargs
-)  # note: no trailing comma pre-3.6
+)
 call(*gidgets[:2])
 call(a, *gidgets[:2])
 call(**self.screen_kwargs)
@@ -515,8 +515,8 @@ call(
     arg,
     another,
     kwarg="hey",
-    **kwargs
-)  # note: no trailing comma pre-3.6
+    **kwargs,
+)
 call(*gidgets[:2])
 call(a, *gidgets[:2])
 call(**self.screen_kwargs)
