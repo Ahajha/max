@@ -45,13 +45,6 @@ PROJECT_ROOT = THIS_DIR.parent
 EMPTY_LINE = "# EMPTY LINE WITH WHITESPACE" + " (this comment will be removed)"
 DETERMINISTIC_HEADER = "[Deterministic header]"
 
-PY36_VERSIONS = {
-    TargetVersion.PY36,
-    TargetVersion.PY37,
-    TargetVersion.PY38,
-    TargetVersion.PY39,
-}
-
 DEFAULT_MODE = mblack.Mode()
 ff = partial(mblack.format_file_in_place, mode=DEFAULT_MODE, fast=True)
 fs = partial(mblack.format_str, mode=DEFAULT_MODE)

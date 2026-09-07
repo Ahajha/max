@@ -83,12 +83,9 @@ from mblack.handle_ipynb_magics import (
 from mblack.linegen import LN, LineGenerator, transform_line
 from mblack.lines import EmptyLineTracker, LinesBlock
 from mblack.mode import (
-    FUTURE_FLAG_TO_FEATURE,
-    VERSION_TO_FEATURES,
     Feature,
     Mode,
     TargetVersion,
-    supports_feature,
 )
 from mblack.nodes import (
     SLASHES,
@@ -1193,21 +1190,13 @@ def format_str(src_contents: str, *, mode: Mode) -> str:
 def _format_str_once(src_contents: str, *, mode: Mode) -> str:
     src_node = lib2to3_parse(src_contents.lstrip())
     dst_blocks: list[LinesBlock] = []
-    if mode.target_versions:
-        versions = mode.target_versions
-    else:
-        versions = {TargetVersion.MOJO}
 
     normalize_fmt_off(src_node, preview=mode.preview)
     lines = LineGenerator(mode=mode)
     elt = EmptyLineTracker(mode=mode)
     split_line_features = {
-        feature
-        for feature in {
-            Feature.TRAILING_COMMA_IN_CALL,
-            Feature.TRAILING_COMMA_IN_DEF,
-        }
-        if supports_feature(versions, feature)
+        Feature.TRAILING_COMMA_IN_CALL,
+        Feature.TRAILING_COMMA_IN_DEF,
     }
     block: LinesBlock | None = None
     for current_line in lines.visit(src_node):

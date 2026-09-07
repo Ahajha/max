@@ -29,7 +29,6 @@ import pytest
 import mblack
 from tests.util import (
     DEFAULT_MODE,
-    PY36_VERSIONS,
     all_data_cases,
     assert_format,
     dump_to_stderr,

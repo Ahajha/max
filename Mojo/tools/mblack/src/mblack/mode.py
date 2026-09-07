@@ -30,161 +30,19 @@ from dataclasses import dataclass, field
 from enum import Enum, auto
 from hashlib import sha256
 from operator import attrgetter
-from typing import Final
 from warnings import warn
 
 from mblack.const import DEFAULT_LINE_LENGTH
 
 
 class TargetVersion(Enum):
-    PY33 = 3
-    PY34 = 4
-    PY35 = 5
-    PY36 = 6
-    PY37 = 7
-    PY38 = 8
-    PY39 = 9
-    PY310 = 10
-    PY311 = 11
     MOJO = 99
 
 
 class Feature(Enum):
-    F_STRINGS = 2
-    NUMERIC_UNDERSCORES = 3
     TRAILING_COMMA_IN_CALL = 4
     TRAILING_COMMA_IN_DEF = 5
-    # The following two feature-flags are mutually exclusive, and exactly one should be
-    # set for every version of python.
-    ASYNC_IDENTIFIERS = 6
-    ASYNC_KEYWORDS = 7
-    ASSIGNMENT_EXPRESSIONS = 8
-    POS_ONLY_ARGUMENTS = 9
-    RELAXED_DECORATORS = 10
-    PATTERN_MATCHING = 11
-    UNPACKING_ON_FLOW = 12
-    ANN_ASSIGN_EXTENDED_RHS = 13
-    EXCEPT_STAR = 14
-    VARIADIC_GENERICS = 15
-    DEBUG_F_STRINGS = 16
     FORCE_OPTIONAL_PARENTHESES = 50
-
-    # __future__ flags
-    FUTURE_ANNOTATIONS = 51
-
-
-FUTURE_FLAG_TO_FEATURE: Final = {
-    "annotations": Feature.FUTURE_ANNOTATIONS,
-}
-
-
-VERSION_TO_FEATURES: dict[TargetVersion, set[Feature]] = {
-    TargetVersion.PY33: {Feature.ASYNC_IDENTIFIERS},
-    TargetVersion.PY34: {Feature.ASYNC_IDENTIFIERS},
-    TargetVersion.PY35: {
-        Feature.TRAILING_COMMA_IN_CALL,
-        Feature.ASYNC_IDENTIFIERS,
-    },
-    TargetVersion.PY36: {
-        Feature.F_STRINGS,
-        Feature.NUMERIC_UNDERSCORES,
-        Feature.TRAILING_COMMA_IN_CALL,
-        Feature.TRAILING_COMMA_IN_DEF,
-        Feature.ASYNC_IDENTIFIERS,
-    },
-    TargetVersion.PY37: {
-        Feature.F_STRINGS,
-        Feature.NUMERIC_UNDERSCORES,
-        Feature.TRAILING_COMMA_IN_CALL,
-        Feature.TRAILING_COMMA_IN_DEF,
-        Feature.ASYNC_KEYWORDS,
-        Feature.FUTURE_ANNOTATIONS,
-    },
-    TargetVersion.PY38: {
-        Feature.F_STRINGS,
-        Feature.DEBUG_F_STRINGS,
-        Feature.NUMERIC_UNDERSCORES,
-        Feature.TRAILING_COMMA_IN_CALL,
-        Feature.TRAILING_COMMA_IN_DEF,
-        Feature.ASYNC_KEYWORDS,
-        Feature.FUTURE_ANNOTATIONS,
-        Feature.ASSIGNMENT_EXPRESSIONS,
-        Feature.POS_ONLY_ARGUMENTS,
-        Feature.UNPACKING_ON_FLOW,
-        Feature.ANN_ASSIGN_EXTENDED_RHS,
-    },
-    TargetVersion.PY39: {
-        Feature.F_STRINGS,
-        Feature.DEBUG_F_STRINGS,
-        Feature.NUMERIC_UNDERSCORES,
-        Feature.TRAILING_COMMA_IN_CALL,
-        Feature.TRAILING_COMMA_IN_DEF,
-        Feature.ASYNC_KEYWORDS,
-        Feature.FUTURE_ANNOTATIONS,
-        Feature.ASSIGNMENT_EXPRESSIONS,
-        Feature.RELAXED_DECORATORS,
-        Feature.POS_ONLY_ARGUMENTS,
-        Feature.UNPACKING_ON_FLOW,
-        Feature.ANN_ASSIGN_EXTENDED_RHS,
-    },
-    TargetVersion.PY310: {
-        Feature.F_STRINGS,
-        Feature.DEBUG_F_STRINGS,
-        Feature.NUMERIC_UNDERSCORES,
-        Feature.TRAILING_COMMA_IN_CALL,
-        Feature.TRAILING_COMMA_IN_DEF,
-        Feature.ASYNC_KEYWORDS,
-        Feature.FUTURE_ANNOTATIONS,
-        Feature.ASSIGNMENT_EXPRESSIONS,
-        Feature.RELAXED_DECORATORS,
-        Feature.POS_ONLY_ARGUMENTS,
-        Feature.UNPACKING_ON_FLOW,
-        Feature.ANN_ASSIGN_EXTENDED_RHS,
-        Feature.PATTERN_MATCHING,
-    },
-    TargetVersion.PY311: {
-        Feature.F_STRINGS,
-        Feature.DEBUG_F_STRINGS,
-        Feature.NUMERIC_UNDERSCORES,
-        Feature.TRAILING_COMMA_IN_CALL,
-        Feature.TRAILING_COMMA_IN_DEF,
-        Feature.ASYNC_KEYWORDS,
-        Feature.FUTURE_ANNOTATIONS,
-        Feature.ASSIGNMENT_EXPRESSIONS,
-        Feature.RELAXED_DECORATORS,
-        Feature.POS_ONLY_ARGUMENTS,
-        Feature.UNPACKING_ON_FLOW,
-        Feature.ANN_ASSIGN_EXTENDED_RHS,
-        Feature.PATTERN_MATCHING,
-        Feature.EXCEPT_STAR,
-        Feature.VARIADIC_GENERICS,
-    },
-    TargetVersion.MOJO: {
-        Feature.F_STRINGS,
-        Feature.DEBUG_F_STRINGS,
-        Feature.NUMERIC_UNDERSCORES,
-        Feature.TRAILING_COMMA_IN_CALL,
-        Feature.TRAILING_COMMA_IN_DEF,
-        Feature.ASYNC_KEYWORDS,
-        Feature.FUTURE_ANNOTATIONS,
-        Feature.ASSIGNMENT_EXPRESSIONS,
-        Feature.RELAXED_DECORATORS,
-        Feature.POS_ONLY_ARGUMENTS,
-        Feature.UNPACKING_ON_FLOW,
-        Feature.ANN_ASSIGN_EXTENDED_RHS,
-        Feature.PATTERN_MATCHING,
-        Feature.EXCEPT_STAR,
-        Feature.VARIADIC_GENERICS,
-    },
-}
-
-
-def supports_feature(
-    target_versions: set[TargetVersion], feature: Feature
-) -> bool:
-    return all(
-        feature in VERSION_TO_FEATURES[version] for version in target_versions
-    )
 
 
 class Preview(Enum):
