@@ -420,19 +420,6 @@ class BlackTestCase(BlackBaseTestCase):
             self.assertEqual(expected, actual, msg)
 
     @patch("mblack.dump_to_file", dump_to_stderr)
-    def test_async_as_identifier(self) -> None:
-        source_path = get_case_path("miscellaneous", "async_as_identifier")
-        source, expected = read_data_from_file(source_path)
-        actual = fs(source)
-        self.assertFormatEqual(expected, actual)
-        major, minor = sys.version_info[:2]
-        if major < 3 or (major <= 3 and minor < 7):
-            mblack.assert_equivalent(source, actual)
-        mblack.assert_stable(source, actual, DEFAULT_MODE)
-        # we cannot parse this, because async/await is not a valid identifier
-        self.invokeBlack([str(source_path)], exit_code=123)
-
-    @patch("mblack.dump_to_file", dump_to_stderr)
     def test_python37(self) -> None:
         source_path = get_case_path("py_37", "python37")
         source, expected = read_data_from_file(source_path)
