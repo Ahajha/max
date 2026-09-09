@@ -62,7 +62,6 @@ __author__ = "Ka-Ping Yee <ping@lfw.org>"
 __credits__ = "GvR, ESR, Tim Peters, Thomas Wouters, Fred Drake, Skip Montanaro"
 
 import re
-from codecs import BOM_UTF8, lookup
 
 from mblib2to3.pgen2.token import *
 
@@ -389,98 +388,6 @@ TokenEater = Callable[[int, str, Coord, Coord, str], None]
 
 GoodTokenInfo = tuple[int, str, Coord, Coord, str]
 TokenInfo = tuple[int, str] | GoodTokenInfo
-
-
-cookie_re = re.compile(r"^[ \t\f]*#.*?coding[:=][ \t]*([-\w.]+)", re.ASCII)
-blank_re = re.compile(rb"^[ \t\f]*(?:[#\r\n]|$)", re.ASCII)
-
-
-def _get_normal_name(orig_enc: str) -> str:
-    """Imitates get_normal_name in tokenizer.c."""
-    # Only care about the first 12 characters.
-    enc = orig_enc[:12].lower().replace("_", "-")
-    if enc == "utf-8" or enc.startswith("utf-8-"):
-        return "utf-8"
-    if enc in ("latin-1", "iso-8859-1", "iso-latin-1") or enc.startswith(
-        ("latin-1-", "iso-8859-1-", "iso-latin-1-")
-    ):
-        return "iso-8859-1"
-    return orig_enc
-
-
-def detect_encoding(readline: Callable[[], bytes]) -> tuple[str, list[bytes]]:
-    """
-    The detect_encoding() function is used to detect the encoding that should
-    be used to decode a Python source file. It requires one argument, readline,
-    in the same way as the tokenize() generator.
-
-    It will call readline a maximum of twice, and return the encoding used
-    (as a string) and a list of any lines (left as bytes) it has read
-    in.
-
-    It detects the encoding from the presence of a utf-8 bom or an encoding
-    cookie as specified in pep-0263. If both a bom and a cookie are present, but
-    disagree, a SyntaxError will be raised. If the encoding cookie is an invalid
-    charset, raise a SyntaxError.  Note that if a utf-8 bom is found,
-    'utf-8-sig' is returned.
-
-    If no encoding is specified, then the default of 'utf-8' will be returned.
-    """
-    bom_found = False
-    encoding = None
-    default = "utf-8"
-
-    def read_or_stop() -> bytes:
-        try:
-            return readline()
-        except StopIteration:
-            return b""
-
-    def find_cookie(line: bytes) -> str | None:
-        try:
-            line_string = line.decode("ascii")
-        except UnicodeDecodeError:
-            return None
-        match = cookie_re.match(line_string)
-        if not match:
-            return None
-        encoding = _get_normal_name(match.group(1))
-        try:
-            codec = lookup(encoding)
-        except LookupError:
-            # This behaviour mimics the Python interpreter
-            raise SyntaxError("unknown encoding: " + encoding)  # noqa: B904
-
-        if bom_found:
-            if codec.name != "utf-8":
-                # This behaviour mimics the Python interpreter
-                raise SyntaxError("encoding problem: utf-8")
-            encoding += "-sig"
-        return encoding
-
-    first = read_or_stop()
-    if first.startswith(BOM_UTF8):
-        bom_found = True
-        first = first[3:]
-        default = "utf-8-sig"
-    if not first:
-        return default, []
-
-    encoding = find_cookie(first)
-    if encoding:
-        return encoding, [first]
-    if not blank_re.match(first):
-        return default, [first]
-
-    second = read_or_stop()
-    if not second:
-        return default, [first]
-
-    encoding = find_cookie(second)
-    if encoding:
-        return encoding, [first, second]
-
-    return default, [first, second]
 
 
 def generate_tokens(
