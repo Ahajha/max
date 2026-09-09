@@ -120,6 +120,7 @@ struct Grammar(Copyable, Defaultable, Writable):
     var start: Int
     # Python 3.7+ parses async as a keyword, not an identifier
     var async_keywords: Bool
+    var mojo_keywords: Bool
     # Keywords that Introduce a named declaration that can use a keyword
     # as a name, e.g. `def struct()`.
     var declaration_keywords: List[String]
@@ -138,6 +139,7 @@ struct Grammar(Copyable, Defaultable, Writable):
         self.start = 256
         # Python 3.7+ parses async as a keyword, not an identifier
         self.async_keywords = False
+        self.mojo_keywords = False
         # Keywords that Introduce a named declaration that can use a keyword
         # as a name, e.g. `def struct()`.
         self.declaration_keywords = []
@@ -215,49 +217,18 @@ def PyInit_grammar() abi("C") -> PythonObject:
             .def_method[clone_grammar]("copy")
         )
 
-        var PyDict_SetItem_call: token.PyDict_SetItem.type = (
-            token.PyDict_SetItem.load(cpython.lib.borrow())
-        )
-        var PyModule_Add_call: token.PyModule_Add.type = (
-            token.PyModule_Add.load(cpython.lib.borrow())
-        )
-        var PyLong_FromLong_call: token.PyLong_FromLong.type = (
-            token.PyLong_FromLong.load(cpython.lib.borrow())
-        )
-        var PyUnicode_FromString_call: token.PyUnicode_FromString.type = (
-            token.PyUnicode_FromString.load(cpython.lib.borrow())
-        )
-
-        var tok_name = cpython.PyDict_New()
-
-        def set_tok_name(
-            name: StaticString, value: c_long
-        ) {
-            mut tok_name,
-            cpython,
-            PyDict_SetItem_call,
-            PyLong_FromLong_call,
-            PyUnicode_FromString_call,
-        }:
-            var key_obj = PyLong_FromLong_call(value)
-            var value_obj = PyUnicode_FromString_call(
-                name.as_c_string_slice().ptr().as_unsafe_any_origin()
-            )
-            _ = PyDict_SetItem_call(
-                tok_name,
-                key_obj,
-                value_obj,
-            )
-            # PyDict_SetItem does _not_ steal a reference to val, so we must decref here.
-            # I'm not sure if it steals a reference to key.
-            cpython.Py_DecRef(value_obj)
-
-        # No need to inc/decref, PyModule_Add steals a reference
-        _ = PyModule_Add_call(
-            mb.module._obj_ptr,
-            "tok_name".as_c_string_slice().ptr().as_unsafe_any_origin(),
-            tok_name,
-        )
+        #        var PyDict_SetItem_call: token.PyDict_SetItem.type = (
+        #            token.PyDict_SetItem.load(cpython.lib.borrow())
+        #        )
+        #        var PyModule_Add_call: token.PyModule_Add.type = (
+        #            token.PyModule_Add.load(cpython.lib.borrow())
+        #        )
+        #        var PyLong_FromLong_call: token.PyLong_FromLong.type = (
+        #            token.PyLong_FromLong.load(cpython.lib.borrow())
+        #        )
+        #        var PyUnicode_FromString_call: token.PyUnicode_FromString.type = (
+        #            token.PyUnicode_FromString.load(cpython.lib.borrow())
+        #        )
 
         return mb.finalize()
     except e:
