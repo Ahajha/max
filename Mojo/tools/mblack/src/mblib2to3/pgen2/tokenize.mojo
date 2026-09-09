@@ -900,64 +900,70 @@ def generate_tokens[
                                 contstr_fstring_quote = quote_char
                                 break
 
-                    if token[-1] == "\n":  # continued string
+                    if token[byte=-1] == "\n":  # continued string
                         strstart = (lnum, start)
                         endprog = (
-                            endprogs[initial]
-                            or endprogs[token[1]]
-                            or endprogs[token[2]]
-                        )
-                        contstr, needcont = line[start:], 1
+                            endprogs[String(initial)]
+                            or endprogs[String(token[byte=1])]
+                            or endprogs[String(token[byte=2])]
+                        ).value()  # this value() might be wrong
+                        contstr = String(line[byte=start:])
+                        needcont = 1
                         contline = line
                         break
                     else:  # ordinary string
                         if stashed:
-                            yield stashed
+                            result.append(stashed.value())
                             stashed = None
-                        yield (STRING, token, spos, epos, line)
+                        result.append((STRING, token, spos, epos, line))
                 elif token.startswith("`"):
-                    endprog = endprogs["`"]
-                    endmatch = endprog.match(line, pos)
-                    yield (NAME, token, spos, epos, line)
-                elif initial.isidentifier():  # ordinary name
+                    endprog = endprogs[
+                        "`"
+                    ].value()  # maybe this value() is correct?
+                    # var endmatch = endprog(line[byte=pos:]) # unused
+                    result.append((NAME, token, spos, epos, line))
+                elif _is_identifier(initial):  # ordinary name
                     if (
                         has_mojo_keywords
                         and token in mojo_keyword_tokens
                         and check_mojo_token(token, end)
                     ):
-                        tok_type = mojo_keyword_tokens[token]
+                        var tok_type = mojo_keyword_tokens[token]
                         # comptime followed by '(' is the expression form
                         # comptime(expr) — emit as NAME so it parses as a
                         # regular function call.
                         if tok_type == COMPTIME:
-                            next_chars = line[end:].lstrip()
-                            if next_chars and next_chars[0] == "(":
+                            var next_chars = line[byte=end:].lstrip()
+                            if next_chars and next_chars[byte=0] == "(":
                                 tok_type = NAME
                         prev_token_value = token
-                        yield (tok_type, token, spos, epos, line)
+                        result.append((tok_type, token, spos, epos, line))
                         continue
 
                     if token in ("async", "await"):
                         if async_keywords or async_def:
-                            yield (
-                                ASYNC if token == "async" else AWAIT,
-                                token,
-                                spos,
-                                epos,
-                                line,
+                            result.append(
+                                (
+                                    ASYNC if token == "async" else AWAIT,
+                                    token,
+                                    spos,
+                                    epos,
+                                    line,
+                                )
                             )
                             continue
 
-                    tok = (NAME, token, spos, epos, line)
+                    var tok = (NAME, token, spos, epos, line)
                     if token == "async" and not stashed:
                         stashed = tok
                         continue
 
+                    # No easy way to do "is string in list[stringspan]", file bug?
                     if token == "for" or token in def_keywords:
                         if (
                             stashed
-                            and stashed[0] == NAME
-                            and stashed[1] == "async"
+                            and stashed.value()[0] == NAME
+                            and stashed.value()[1] == "async"
                         ):
                             if token in def_keywords:
                                 async_def = True
