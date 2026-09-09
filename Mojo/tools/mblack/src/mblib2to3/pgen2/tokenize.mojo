@@ -959,38 +959,43 @@ def generate_tokens[
                         continue
 
                     # No easy way to do "is string in list[stringspan]", file bug?
-                    if token == "for" or token in def_keywords:
+                    # "token in def_keywords"
+                    if token == "for" or token in [
+                        String(kw) for kw in def_keywords
+                    ]:
                         if (
                             stashed
                             and stashed.value()[0] == NAME
                             and stashed.value()[1] == "async"
                         ):
-                            if token in def_keywords:
+                            if token in [String(kw) for kw in def_keywords]:
                                 async_def = True
                                 async_def_indent = indents[-1]
 
-                            yield (
-                                ASYNC,
-                                stashed[1],
-                                stashed[2],
-                                stashed[3],
-                                stashed[4],
+                            result.append(
+                                (
+                                    ASYNC,
+                                    stashed.value()[1],
+                                    stashed.value()[2],
+                                    stashed.value()[3],
+                                    stashed.value()[4],
+                                )
                             )
                             stashed = None
 
                     if stashed:
-                        prev_token_value = stashed[1]
-                        yield stashed
+                        prev_token_value = stashed.value()[1]
+                        result.append(stashed.value())
                         stashed = None
 
                     prev_token_value = token
-                    yield tok
+                    result.append(tok)
                 elif initial == "\\":  # continued stmt
                     # This yield is new; needed for better idempotency:
                     if stashed:
-                        yield stashed
+                        result.append(stashed.value())
                         stashed = None
-                    yield (NL, token, spos, (lnum, pos), line)
+                    result.append((NL, token, spos, (lnum, pos), line))
                     continued = 1
                 else:
                     if initial in "([{":
@@ -998,25 +1003,29 @@ def generate_tokens[
                     elif initial in ")]}":
                         parenlev -= 1
                     if stashed:
-                        prev_token_value = stashed[1]
-                        yield stashed
+                        prev_token_value = stashed.value()[1]
+                        result.append(stashed.value())
                         stashed = None
                     prev_token_value = token
-                    yield (OP, token, spos, epos, line)
+                    result.append((OP, token, spos, epos, line))
             else:
-                yield (
-                    ERRORTOKEN,
-                    line[pos],
-                    (lnum, pos),
-                    (lnum, pos + 1),
-                    line,
+                result.append(
+                    (
+                        ERRORTOKEN,
+                        String(line[byte=pos]),
+                        (lnum, pos),
+                        (lnum, pos + 1),
+                        line,
+                    )
                 )
                 pos += 1
 
     if stashed:
-        yield stashed
+        result.append(stashed.value())
         stashed = None
 
     for _indent in indents[1:]:  # pop remaining indent levels
-        yield (DEDENT, "", (lnum, 0), (lnum, 0), "")
-    yield (ENDMARKER, "", (lnum, 0), (lnum, 0), "")
+        result.append((DEDENT, "", (lnum, 0), (lnum, 0), ""))
+    result.append((ENDMARKER, "", (lnum, 0), (lnum, 0), ""))
+
+    return result^
