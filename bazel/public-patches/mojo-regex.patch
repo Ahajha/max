@@ -1,0 +1,140 @@
+diff --git a/src/regex/dfa.mojo b/src/regex/dfa.mojo
+index cc57d72..74a72ed 100644
+--- a/src/regex/dfa.mojo
++++ b/src/regex/dfa.mojo
+@@ -144,7 +144,7 @@ def _expand_character_range[
+     # Fallback for complex cases - expand all ranges and characters
+     # Estimate capacity: each range a-z adds up to 26 chars, single chars add 1
+     var estimated_capacity = inner.byte_length() * 10  # Generous estimate
+-    var result = String(capacity=estimated_capacity)
++    var result = String(capacity_bytes=estimated_capacity)
+     var i = 0
+     while i < inner.byte_length():
+         if i + 2 < inner.byte_length() and Int(
+@@ -2795,7 +2795,7 @@ def _collect_alternation_branches(
+         # cheap and keeps `current` valid across the appends.
+         var current = nodes[idx]
+         if current.type == GROUP:
+-            var branch = String(capacity=current.get_children_len())
++            var branch = String(capacity_bytes=current.get_children_len())
+             for i in range(current.get_children_len()):
+                 ref child = current.get_child(i)
+                 if child.type == ELEMENT and child.get_value():
+diff --git a/src/regex/matcher.mojo b/src/regex/matcher.mojo
+index 263d39b..2a698d3 100644
+--- a/src/regex/matcher.mojo
++++ b/src/regex/matcher.mojo
+@@ -1604,7 +1604,7 @@ def _apply_template_fixed(
+ 
+     No repl scanning. Walks the template list and emits slices.
+     """
+-    var out = String(capacity=output_estimate + 4)
++    var out = String(capacity_bytes=output_estimate + 4)
+     var tpl_ptr = template.unsafe_ptr()
+     var tpl_len = len(template)
+ 
+@@ -1631,7 +1631,7 @@ def _apply_template_groups[
+     group_idx: Array[Int, 10],
+ ) -> String:
+     """Apply pre-parsed template using NFA-extracted group matches."""
+-    var out = String(capacity=32)
++    var out = String(capacity_bytes=32)
+     var tpl_ptr = template.unsafe_ptr()
+     var tpl_len = len(template)
+ 
+@@ -1698,7 +1698,7 @@ def _sub_impl_with_repl(
+         return String(text)
+ 
+     var text_ptr = text.unsafe_ptr()
+-    var result = String(capacity=text_len + 64)
++    var result = String(capacity_bytes=text_len + 64)
+     var pos = 0
+     var replacements = 0
+ 
+diff --git a/src/regex/onepass.mojo b/src/regex/onepass.mojo
+index b55fb4e..5ecdb49 100644
+--- a/src/regex/onepass.mojo
++++ b/src/regex/onepass.mojo
+@@ -161,7 +161,7 @@ def _hash_set(nfa_set: SIMD[DType.uint8, MAX_STATES]) -> UInt64:
+ 
+     var u64_view = bitcast[DType.uint64, NUM_U64](nfa_set)
+ 
+-    @parameter
++    @__parameter
+     def xor_op[
+         w: Int
+     ](a: SIMD[DType.uint64, w], b: SIMD[DType.uint64, w]) -> SIMD[
+diff --git a/src/regex/optimizer.mojo b/src/regex/optimizer.mojo
+index 4266535..7c428ce 100644
+--- a/src/regex/optimizer.mojo
++++ b/src/regex/optimizer.mojo
+@@ -660,7 +660,7 @@ struct PatternAnalyzer:
+             )
+         elif node.type == GROUP:
+             # Extract literal string from GROUP of ELEMENTs
+-            var branch_text = String(capacity=String.INLINE_CAPACITY)
++            var branch_text = String(capacity_bytes=String.INLINE_CAPACITY)
+             for i in range(node.get_children_len()):
+                 ref element = node.get_child(i)
+                 if element.type != ELEMENT:
+@@ -681,7 +681,7 @@ struct PatternAnalyzer:
+         if len(branches) == 1:
+             return branches[0]
+ 
+-        var prefix = String(capacity=String.INLINE_CAPACITY)
++        var prefix = String(capacity_bytes=String.INLINE_CAPACITY)
+         ref first_branch = branches[0]
+         var min_length = first_branch.byte_length()
+ 
+@@ -937,12 +937,12 @@ def _extract_literal_chars(ast: ASTNode) -> String:
+         var repeats = ast.min
+         if repeats <= 1:
+             return String(ch)
+-        var out = String(capacity=repeats * ch.byte_length())
++        var out = String(capacity_bytes=repeats * ch.byte_length())
+         for _ in range(repeats):
+             out += ch
+         return out
+     elif ast.type == GROUP:
+-        var result = String(capacity=String.INLINE_CAPACITY)
++        var result = String(capacity_bytes=String.INLINE_CAPACITY)
+         for i in range(ast.get_children_len()):
+             result += _extract_literal_chars(ast.get_child(i))
+         return result
+diff --git a/src/regex/parser.mojo b/src/regex/parser.mojo
+index 0af4480..729178c 100644
+--- a/src/regex/parser.mojo
++++ b/src/regex/parser.mojo
+@@ -121,7 +121,7 @@ def get_range_str(start: String, end: String) -> String:
+     var range_size = end_ord - start_ord + 1
+ 
+     # Pre-allocate to avoid repeated reallocations
+-    var result = String(capacity=range_size + 1)
++    var result = String(capacity_bytes=range_size + 1)
+     for i in range(range_size):
+         result += chr(start_ord + i)
+     return result
+diff --git a/src/regex/pikevm.mojo b/src/regex/pikevm.mojo
+index c21f464..cf45b0e 100644
+--- a/src/regex/pikevm.mojo
++++ b/src/regex/pikevm.mojo
+@@ -592,7 +592,6 @@ struct PikeVMEngine(Copyable, Movable):
+             for i in range(nxt_count):
+                 cur_pcs[i] = nxt_pcs[i]
+             cur_count = nxt_count
+-            cur_seen = nxt_seen
+             nxt_count = 0
+             nxt_seen = SIMD[DType.uint8, MAX_STATES](0)
+             pos += 1
+diff --git a/src/regex/simd_ops.mojo b/src/regex/simd_ops.mojo
+index b828b52..34c64c4 100644
+--- a/src/regex/simd_ops.mojo
++++ b/src/regex/simd_ops.mojo
+@@ -1320,6 +1320,7 @@ def apply_quantifier_simd_generic[
+ 
+     Parameters:
+         T: The concrete type implementing SIMDMatcher.
++        O: <doc>.
+ 
+     Args:
+         matcher: The SIMD matcher instance.

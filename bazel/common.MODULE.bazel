@@ -756,6 +756,25 @@ rules_ts_ext.deps(
 )
 use_repo(rules_ts_ext, "npm_typescript")
 
+http_archive(
+    name = "mojo-regex",
+    build_file_content = """
+load("@rules_mojo//mojo:mojo_library.bzl", "mojo_library")
+mojo_library(
+    name = "mojo-regex",
+    srcs = glob(["src/**/*.mojo"]),
+    deps = ["@mojo//:std"],
+)
+""",
+    integrity = "sha256-C2c1JUzEZgsyEBHfbujmo+05KukOCYVYo/OYzJZpzTQ=",
+    patch_strip = 1,
+    patches = [
+        "//bazel/public-patches:mojo-regex.patch",
+    ],
+    strip_prefix = "mojo-regex-b8c2045830321cf5a9716792f290a332748ec2e8",
+    url = "https://github.com/msaelices/mojo-regex/archive/b8c2045830321cf5a9716792f290a332748ec2e8.tar.gz",
+)
+
 # BEGIN GENERATED LOGIT_VERIFICATION GOLDEN HTTP_FILES
 
 LOGIT_VERIFICATION_GOLDENS = [
