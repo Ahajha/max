@@ -64,12 +64,10 @@ comptime __credits__ = (
 )
 
 import regex as re
-from regex.comptime_regex import match_first, Match
+from regex.comptime_regex import match_first, findall, Match
 
 # import re
 # from codecs import BOM_UTF8, lookup
-
-import token
 
 
 from std.collections import Set
@@ -382,7 +380,6 @@ comptime _strprefixes = (
 
 # TODO: list comprehensions don't work in comptime, but the error says to remove comptime _and_ move to a function?
 def _get_endprogs() -> Dict[String, Optional[Matcher]]:
-    comptime pseudoprog = match_first[PseudoToken]  # re.UNICODE ??
     comptime single3prog = match_first[Single3]
     comptime double3prog = match_first[Double3]
     var _strprefixes_mat = materialize[_strprefixes]()
@@ -401,7 +398,7 @@ def _get_endprogs() -> Dict[String, Optional[Matcher]]:
     return result^
 
 
-comptime endprogs = _get_endprogs()
+comptime endprogs_comptime = _get_endprogs()
 
 
 def _get_triple_quoted() -> Set[String]:
@@ -425,7 +422,7 @@ def _get_single_quoted() -> Set[String]:
     }
 
 
-comptime single_quoted = {"'", '"'} | _get_single_quoted()
+comptime single_quoted_comptime = {"'", '"'} | _get_single_quoted()
 
 comptime tabsize = 8
 
@@ -451,6 +448,35 @@ comptime TokenEater = def(int, str, Coord, Coord, str)
 
 comptime GoodTokenInfo = tuple[int, str, Coord, Coord, str]
 comptime TokenInfo = Variant[tuple[int, str], GoodTokenInfo]
+
+
+def _is_alpha(byte: Byte) -> Bool:
+    return (Byte(ord("a")) <= byte and byte <= Byte(ord("z"))) or (
+        Byte(ord("A")) <= byte and byte <= Byte(ord("Z"))
+    )
+
+
+def _is_digit(byte: Byte) -> Bool:
+    return Byte(ord("0")) <= byte and byte <= Byte(ord("9"))
+
+
+# Replaces Python's builtin
+def _is_identifier(text: StringSpan) -> Bool:
+    """Return True if text is a valid Mojo identifier."""
+    if not text:
+        return False
+
+    # The first character must be a letter or underscore.
+    if not (_is_alpha(Byte(ord(text[byte=0]))) or text[byte=0] == "_"):
+        return False
+
+    # Remaining characters may also include digits.
+    for char in text[byte=1:]:
+        var byte = Byte(ord(char))
+        if not (_is_alpha(byte) or _is_digit(byte) or char == "_"):
+            return False
+
+    return True
 
 
 def generate_tokens[
@@ -479,7 +505,10 @@ def generate_tokens[
     var lnum = 0
     var parenlev = 0
     var continued = 0
-    var numchars = "0123456789"
+    comptime numchars = "0123456789"
+    comptime pseudoprog = findall[PseudoToken]  # re.UNICODE ??
+    var single_quoted = materialize[single_quoted_comptime]()
+    var endprogs = materialize[endprogs_comptime]()
     var contstr = ""
     var needcont = 0
     var contline: Optional[str] = None
@@ -564,7 +593,7 @@ def generate_tokens[
                     # Found the end
                     pos = end
                     result.append(
-                        GoodTokenInfo(
+                        (
                             STRING,
                             contstr + line[byte=:end],
                             strstart,
@@ -587,7 +616,7 @@ def generate_tokens[
                     pos = endmatch.value().end_idx
                     var end = pos
                     result.append(
-                        GoodTokenInfo(
+                        (
                             STRING,
                             contstr + line[byte=:end],
                             strstart,
@@ -603,7 +632,7 @@ def generate_tokens[
                     and line[byte= -3:] != StringSpan("\\\r\n")
                 ):
                     result.append(
-                        GoodTokenInfo(
+                        (
                             ERRORTOKEN,
                             contstr + line,
                             strstart,
@@ -642,7 +671,7 @@ def generate_tokens[
 
             if line[byte=pos] in "\r\n":  # skip blank lines
                 result.append(
-                    GoodTokenInfo(
+                    (
                         NL,
                         String(line[byte=pos:]),
                         Tuple(lnum, pos),
@@ -656,7 +685,7 @@ def generate_tokens[
                 var comment_token = line[byte=pos:].rstrip("\r\n")
                 var nl_pos = pos + comment_token.byte_length()
                 result.append(
-                    GoodTokenInfo(
+                    (
                         COMMENT,
                         String(comment_token),
                         (lnum, pos),
@@ -665,7 +694,7 @@ def generate_tokens[
                     )
                 )
                 result.append(
-                    GoodTokenInfo(
+                    (
                         NL,
                         String(line[byte=nl_pos:]),
                         (lnum, nl_pos),
@@ -678,7 +707,7 @@ def generate_tokens[
             if column > indents[-1]:  # count indents
                 indents.append(column)
                 result.append(
-                    GoodTokenInfo(
+                    (
                         INDENT,
                         String(line[byte=:pos]),
                         (lnum, 0),
@@ -703,9 +732,7 @@ def generate_tokens[
                     async_def_nl = False
                     async_def_indent = 0
 
-                result.append(
-                    GoodTokenInfo(DEDENT, "", (lnum, pos), (lnum, pos), line)
-                )
+                result.append((DEDENT, "", (lnum, pos), (lnum, pos), line))
 
             if async_def and async_def_nl and async_def_indent >= indents[-1]:
                 async_def = False
@@ -733,74 +760,90 @@ def generate_tokens[
             if (
                 prev_token_value.value()
                 in grammar.value().declaration_keywords + ["."]
-            ):  # noqa: B023
+            ):
                 return False
             # Context sensitive arg conventions are only a keyword if followed
             # by an identifier letter or a variadic.
             if token_value not in ["out", "read", "imm", "mut", "deinit"]:
                 return True
-            var next_token = line[byte=token_end:].lstrip()  # noqa: B023
+            var next_token = line[byte=token_end:].lstrip()
             if token_value == "out" and next_token.startswith("["):
                 var bracket_depth = 0
                 for idx, char in enumerate(next_token.bytes()):
-                    if char == "[":
+                    if char == Byte(ord("[")):
                         bracket_depth += 1
-                    elif char == "]":
+                    elif char == Byte(ord("]")):
                         bracket_depth -= 1
                         if bracket_depth == 0:
-                            after_bracket = next_token[idx + 1 :].lstrip()
-                            return (
-                                bool(after_bracket)
-                                and after_bracket[0].isidentifier()
+                            var after_bracket = next_token[
+                                byte = idx + 1 :
+                            ].lstrip()
+                            return bool(after_bracket) and _is_identifier(
+                                after_bracket[byte=0]
                             )
                 return False
             return next_token and (
-                next_token[0].isidentifier() or next_token[0] == "*"
+                _is_identifier(next_token[byte=0])
+                or next_token[byte=0] == StringSpan("*")
             )
 
         while pos < max:
-            pseudomatch = pseudoprog.match(line, pos)
-            if pseudomatch:  # scan for tokens
-                start, end = pseudomatch.span(1)
-                spos, epos, pos = (lnum, start), (lnum, end), end
-                token, initial = line[start:end], line[start]
+            var pseudomatch = pseudoprog(line[byte=pos:])
+            if len(pseudomatch) > 1:  # scan for tokens
+                var start = pseudomatch[1].start_idx
+                var end = pseudomatch[1].end_idx
+                var spos = (lnum, start)
+                var epos = (lnum, end)
+                pos = end
+                var token = String(line[byte=start:end])
+                var initial = line[byte=start]
 
                 if initial in numchars or (
-                    initial == "." and token != "."
+                    initial == "." and token != StringSpan(".")
                 ):  # ordinary number
-                    yield (NUMBER, token, spos, epos, line)
+                    result.append((NUMBER, token, spos, epos, line))
                 elif initial in "\r\n":
-                    newline = NEWLINE
+                    var newline = NEWLINE
                     if parenlev > 0:
                         newline = NL
                     elif async_def:
                         async_def_nl = True
                     if stashed:
-                        yield stashed
+                        result.append(stashed.value())
                         stashed = None
                     if newline == NEWLINE:
                         prev_token_value = None
-                    yield (newline, token, spos, epos, line)
+                    result.append((newline, token, spos, epos, line))
 
                 elif initial == "#":
                     assert not token.endswith("\n")
                     if stashed:
-                        yield stashed
+                        result.append(stashed.value())
                         stashed = None
-                    yield (COMMENT, token, spos, epos, line)
-                elif token in triple_quoted:
+                    result.append((COMMENT, token, spos, epos, line))
+                elif token in materialize[triple_quoted]():
                     # Try processing as f-string/t-string
-                    result = _process_fstring_or_tstring(
+                    var tfstr_result = _process_fstring_or_tstring(
                         token, line, start, triple_quoted=True
                     )
-                    if result:
-                        token, pos, quote_chars = result
+                    if tfstr_result:
+                        token = tfstr_result.value()[0]
+                        pos = tfstr_result.value()[1]
+                        var quote_chars = tfstr_result.value()[2]
                         if quote_chars is None:
                             # Found on same line
                             if stashed:
-                                yield stashed
+                                result.append(stashed.value())
                                 stashed = None
-                            yield (STRING, token, spos, (lnum, pos), line)
+                            result.append(
+                                (
+                                    STRING,
+                                    token,
+                                    spos,
+                                    (lnum, pos),
+                                    line,
+                                )
+                            )
                         else:
                             # Multi-line f-string/t-string
                             strstart = (lnum, start)
@@ -810,38 +853,44 @@ def generate_tokens[
                             break
                     else:
                         # Regular triple-quoted string (not f-string/t-string)
-                        endprog = endprogs[token]  # type: ignore
-                        endmatch = endprog.match(line, pos)
+                        endprog = endprogs[token].value()
+                        var endmatch = endprog(line[byte=:pos])
                         if endmatch:  # all on one line
-                            pos = endmatch.end(0)
-                            token = line[start:pos]
+                            pos = endmatch.value().end_idx
+                            token = String(line[byte=start:pos])
                             if stashed:
-                                yield stashed
+                                result.append(stashed.value())
                                 stashed = None
-                            yield (STRING, token, spos, (lnum, pos), line)
+                            result.append(
+                                (STRING, token, spos, (lnum, pos), line)
+                            )
                         else:
                             strstart = (lnum, start)  # multiple lines
-                            contstr = line[start:]
+                            contstr = String(line[byte=start:])
                             contline = line
                             break
                 elif (
-                    initial in single_quoted
-                    or token[:2] in single_quoted
-                    or token[:3] in single_quoted
+                    String(initial) in single_quoted
+                    or String(token[byte=:2]) in single_quoted
+                    or String(token[byte=:3]) in single_quoted
                 ):
                     # Try processing as f-string/t-string
-                    if token[-1] != "\n":
-                        result = _process_fstring_or_tstring(
+                    if token[byte=-1] != String("\n"):
+                        var result_tfstr = _process_fstring_or_tstring(
                             token, line, start, triple_quoted=False
                         )
-                        if result:
-                            token, pos, quote_char = result
+                        if result_tfstr:
+                            token = result_tfstr.value()[0]
+                            pos = result_tfstr.value()[1]
+                            var quote_char = result_tfstr.value()[2]
                             if quote_char is None:
                                 # Found on same line
                                 if stashed:
-                                    yield stashed
+                                    result.append(stashed.value())
                                     stashed = None
-                                yield (STRING, token, spos, (lnum, pos), line)
+                                result.append(
+                                    (STRING, token, spos, (lnum, pos), line)
+                                )
                                 continue
                             else:
                                 # Multi-line f-string/t-string
@@ -854,7 +903,7 @@ def generate_tokens[
                     if token[-1] == "\n":  # continued string
                         strstart = (lnum, start)
                         endprog = (
-                            endprogs[initial]  # type: ignore
+                            endprogs[initial]
                             or endprogs[token[1]]
                             or endprogs[token[2]]
                         )
@@ -867,7 +916,7 @@ def generate_tokens[
                             stashed = None
                         yield (STRING, token, spos, epos, line)
                 elif token.startswith("`"):
-                    endprog = endprogs["`"]  # type: ignore
+                    endprog = endprogs["`"]
                     endmatch = endprog.match(line, pos)
                     yield (NAME, token, spos, epos, line)
                 elif initial.isidentifier():  # ordinary name
