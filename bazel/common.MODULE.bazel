@@ -761,9 +761,10 @@ http_archive(
     build_file_content = """
 load("@rules_mojo//mojo:mojo_library.bzl", "mojo_library")
 mojo_library(
-    name = "mojo-regex",
+    name = "regex",
     srcs = glob(["src/**/*.mojo"]),
     deps = ["@mojo//:std"],
+    visibility = ["//visibility:public"],
 )
 """,
     integrity = "sha256-C2c1JUzEZgsyEBHfbujmo+05KukOCYVYo/OYzJZpzTQ=",

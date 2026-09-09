@@ -25,10 +25,27 @@ mojo_shared_library(
     ],
 )
 
+# WIP: make into shared lib
+mojo_shared_library(
+    name = "tokenize",
+    srcs = [
+        "tokenize.mojo",
+        # Actually deps, revisit
+        "grammar.mojo",
+        "token.mojo",
+    ],
+    shared_lib_name = "tokenize.so",
+    tags = ["manual"],
+    deps = [
+        "@mojo-regex//:regex",
+        "@mojo//:std",
+    ],
+)
+
 modular_py_library(
     name = "token_lib",
     data = [
-        ":grammar",
+        # ":grammar",
         ":token",
     ],
     imports = ["../.."],
