@@ -101,7 +101,16 @@ def startswith[
 
 
 def group(*choices: String) -> String:
-    return "(" + "|".join(choices) + ")"
+    # return "(" + "|".join(choices) + ")"
+    var result: String = "("
+    var needs_bar = False
+    for choice in choices:
+        if needs_bar:
+            result += "|"
+        needs_bar = True
+        result += choice
+    result += ")"
+    return result
 
 
 def any(*choices: String) -> String:
@@ -113,7 +122,15 @@ def maybe(*choices: String) -> String:
 
 
 def _combinations(*l: String) -> Set[String]:
-    return {x + y for x in l for y in l + ("",) if x.casefold() != y.casefold()}
+    # return {x + y for x in l for y in l + ("",) if x.casefold() != y.casefold()}
+    var l_and_empty: List = [item for item in l] + [""]
+    return {
+        x + y
+        for x in l
+        for y in l_and_empty
+        # Swapping `.casefold()` for `lower()` since Mojo doesn't have the former
+        if x.lower() != y.lower()
+    }
 
 
 comptime Whitespace = r"[ \f\t]*"
