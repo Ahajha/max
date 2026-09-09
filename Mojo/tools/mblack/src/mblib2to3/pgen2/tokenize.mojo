@@ -420,7 +420,6 @@ comptime endprogs_comptime = _get_endprogs()
 
 def _get_triple_quoted() -> Set[String]:
     var _strprefixes_mat = materialize[_strprefixes]()
-    var result: Set[String]
     # TODO: Remove String() calls
     return {String(t"{prefix}'''") for prefix in _strprefixes_mat} | {
         String(t'{prefix}"""') for prefix in _strprefixes_mat
@@ -432,7 +431,6 @@ comptime triple_quoted = {"'''", '"""'} | _get_triple_quoted()
 
 def _get_single_quoted() -> Set[String]:
     var _strprefixes_mat = materialize[_strprefixes]()
-    var result: Set[String]
     # TODO: Remove String() calls
     return {String(t"{prefix}'") for prefix in _strprefixes_mat} | {
         String(t'{prefix}"') for prefix in _strprefixes_mat
@@ -497,7 +495,7 @@ def _is_identifier(text: StringSpan) -> Bool:
 
 
 def generate_tokens[
-    f: def() -> str
+    f: def() raises -> str
 ](readline: f, grammar: Optional[Grammar] = None) raises Variant[
     TokenError, Error, IndentationError
 ] -> List[GoodTokenInfo]:
@@ -577,8 +575,10 @@ def generate_tokens[
         "__extension": EXTENSION,
     }
 
-    var strstart: tuple[int, int]
-    var endprog: Matcher
+    # Possible it gets used "before initialization", give it a dummy value
+    var strstart: tuple[int, int] = (-100, -100)
+    # Same
+    var endprog: Matcher = match_first["abcdefg"]
 
     while 1:  # loop over lines in stream
         var line: String
@@ -1001,6 +1001,7 @@ def generate_tokens[
                             stashed = None
 
                     if stashed:
+                        # I think this is actually used
                         prev_token_value = stashed.value()[1]
                         result.append(stashed.value())
                         stashed = None
@@ -1020,7 +1021,9 @@ def generate_tokens[
                     elif initial in ")]}":
                         parenlev -= 1
                     if stashed:
-                        prev_token_value = stashed.value()[1]
+                        prev_token_value = stashed.value()[
+                            1
+                        ]  # I think this is actually used
                         result.append(stashed.value())
                         stashed = None
                     prev_token_value = token
@@ -1039,7 +1042,7 @@ def generate_tokens[
 
     if stashed:
         result.append(stashed.value())
-        stashed = None
+        # stashed = None
 
     for _indent in indents[1:]:  # pop remaining indent levels
         result.append((DEDENT, "", (lnum, 0), (lnum, 0), ""))
