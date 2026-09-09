@@ -116,6 +116,86 @@ comptime GENERATOR_TYPE = 78
 comptime NT_OFFSET = 256
 # --end constants--
 
+comptime tok_name: Dict[Int, StaticString] = {
+    ENDMARKER: "ENDMARKER",
+    NAME: "NAME",
+    NUMBER: "NUMBER",
+    STRING: "STRING",
+    NEWLINE: "NEWLINE",
+    INDENT: "INDENT",
+    DEDENT: "DEDENT",
+    LPAR: "LPAR",
+    RPAR: "RPAR",
+    LSQB: "LSQB",
+    RSQB: "RSQB",
+    COLON: "COLON",
+    COMMA: "COMMA",
+    SEMI: "SEMI",
+    PLUS: "PLUS",
+    MINUS: "MINUS",
+    STAR: "STAR",
+    SLASH: "SLASH",
+    VBAR: "VBAR",
+    AMPER: "AMPER",
+    LESS: "LESS",
+    GREATER: "GREATER",
+    EQUAL: "EQUAL",
+    DOT: "DOT",
+    PERCENT: "PERCENT",
+    BACKQUOTE: "BACKQUOTE",
+    LBRACE: "LBRACE",
+    RBRACE: "RBRACE",
+    EQEQUAL: "EQEQUAL",
+    NOTEQUAL: "NOTEQUAL",
+    LESSEQUAL: "LESSEQUAL",
+    GREATEREQUAL: "GREATEREQUAL",
+    TILDE: "TILDE",
+    CIRCUMFLEX: "CIRCUMFLEX",
+    LEFTSHIFT: "LEFTSHIFT",
+    RIGHTSHIFT: "RIGHTSHIFT",
+    DOUBLESTAR: "DOUBLESTAR",
+    PLUSEQUAL: "PLUSEQUAL",
+    MINEQUAL: "MINEQUAL",
+    STAREQUAL: "STAREQUAL",
+    SLASHEQUAL: "SLASHEQUAL",
+    PERCENTEQUAL: "PERCENTEQUAL",
+    AMPEREQUAL: "AMPEREQUAL",
+    VBAREQUAL: "VBAREQUAL",
+    CIRCUMFLEXEQUAL: "CIRCUMFLEXEQUAL",
+    LEFTSHIFTEQUAL: "LEFTSHIFTEQUAL",
+    RIGHTSHIFTEQUAL: "RIGHTSHIFTEQUAL",
+    DOUBLESTAREQUAL: "DOUBLESTAREQUAL",
+    DOUBLESLASH: "DOUBLESLASH",
+    DOUBLESLASHEQUAL: "DOUBLESLASHEQUAL",
+    AT: "AT",
+    ATEQUAL: "ATEQUAL",
+    OP: "OP",
+    COMMENT: "COMMENT",
+    NL: "NL",
+    RARROW: "RARROW",
+    AWAIT: "AWAIT",
+    ASYNC: "ASYNC",
+    ERRORTOKEN: "ERRORTOKEN",
+    COLONEQUAL: "COLONEQUAL",
+    N_TOKENS: "N_TOKENS",
+    STRUCT: "STRUCT",
+    ALIAS: "ALIAS",
+    REF: "REF",
+    VAR: "VAR",
+    MLIR_REGION: "MLIR_REGION",
+    READ: "READ",
+    MUT: "MUT",
+    OUT: "OUT",
+    TRAIT: "TRAIT",
+    DEINIT: "DEINIT",
+    WHERE: "WHERE",
+    EXTENSION: "EXTENSION",
+    COMPTIME: "COMPTIME",
+    IMM: "IMM",
+    GENERATOR_TYPE: "GENERATOR_TYPE",
+    NT_OFFSET: "NT_OFFSET",
+}
+
 
 comptime PyModule_AddIntConstant = ExternalFunction[
     "PyModule_AddIntConstant",
@@ -182,109 +262,31 @@ def PyInit_token() abi("C") -> PythonObject:
         )
 
         def add_int_constant(
-            name: StaticString, value: c_long
+            name: StaticString, value: Int
         ) {mut mb, PyModule_AddIntConstant_call}:
             _ = PyModule_AddIntConstant_call(
                 mb.module._obj_ptr,
                 name.as_c_string_slice().ptr().as_unsafe_any_origin(),
-                value,
+                c_long(value),
             )
 
-        add_int_constant("ENDMARKER", ENDMARKER)
-        add_int_constant("NAME", NAME)
-        add_int_constant("NUMBER", NUMBER)
-        add_int_constant("STRING", STRING)
-        add_int_constant("NEWLINE", NEWLINE)
-        add_int_constant("INDENT", INDENT)
-        add_int_constant("DEDENT", DEDENT)
-        add_int_constant("LPAR", LPAR)
-        add_int_constant("RPAR", RPAR)
-        add_int_constant("LSQB", LSQB)
-        add_int_constant("RSQB", RSQB)
-        add_int_constant("COLON", COLON)
-        add_int_constant("COMMA", COMMA)
-        add_int_constant("SEMI", SEMI)
-        add_int_constant("PLUS", PLUS)
-        add_int_constant("MINUS", MINUS)
-        add_int_constant("STAR", STAR)
-        add_int_constant("SLASH", SLASH)
-        add_int_constant("VBAR", VBAR)
-        add_int_constant("AMPER", AMPER)
-        add_int_constant("LESS", LESS)
-        add_int_constant("GREATER", GREATER)
-        add_int_constant("EQUAL", EQUAL)
-        add_int_constant("DOT", DOT)
-        add_int_constant("PERCENT", PERCENT)
-        add_int_constant("BACKQUOTE", BACKQUOTE)
-        add_int_constant("LBRACE", LBRACE)
-        add_int_constant("RBRACE", RBRACE)
-        add_int_constant("EQEQUAL", EQEQUAL)
-        add_int_constant("NOTEQUAL", NOTEQUAL)
-        add_int_constant("LESSEQUAL", LESSEQUAL)
-        add_int_constant("GREATEREQUAL", GREATEREQUAL)
-        add_int_constant("TILDE", TILDE)
-        add_int_constant("CIRCUMFLEX", CIRCUMFLEX)
-        add_int_constant("LEFTSHIFT", LEFTSHIFT)
-        add_int_constant("RIGHTSHIFT", RIGHTSHIFT)
-        add_int_constant("DOUBLESTAR", DOUBLESTAR)
-        add_int_constant("PLUSEQUAL", PLUSEQUAL)
-        add_int_constant("MINEQUAL", MINEQUAL)
-        add_int_constant("STAREQUAL", STAREQUAL)
-        add_int_constant("SLASHEQUAL", SLASHEQUAL)
-        add_int_constant("PERCENTEQUAL", PERCENTEQUAL)
-        add_int_constant("AMPEREQUAL", AMPEREQUAL)
-        add_int_constant("VBAREQUAL", VBAREQUAL)
-        add_int_constant("CIRCUMFLEXEQUAL", CIRCUMFLEXEQUAL)
-        add_int_constant("LEFTSHIFTEQUAL", LEFTSHIFTEQUAL)
-        add_int_constant("RIGHTSHIFTEQUAL", RIGHTSHIFTEQUAL)
-        add_int_constant("DOUBLESTAREQUAL", DOUBLESTAREQUAL)
-        add_int_constant("DOUBLESLASH", DOUBLESLASH)
-        add_int_constant("DOUBLESLASHEQUAL", DOUBLESLASHEQUAL)
-        add_int_constant("AT", AT)
-        add_int_constant("ATEQUAL", ATEQUAL)
-        add_int_constant("OP", OP)
-        add_int_constant("COMMENT", COMMENT)
-        add_int_constant("NL", NL)
-        add_int_constant("RARROW", RARROW)
-        add_int_constant("AWAIT", AWAIT)
-        add_int_constant("ASYNC", ASYNC)
-        add_int_constant("ERRORTOKEN", ERRORTOKEN)
-        add_int_constant("COLONEQUAL", COLONEQUAL)
-        add_int_constant("N_TOKENS", N_TOKENS)
-        add_int_constant("STRUCT", STRUCT)
-        add_int_constant("ALIAS", ALIAS)
-        add_int_constant("REF", REF)
-        add_int_constant("VAR", VAR)
-        add_int_constant("MLIR_REGION", MLIR_REGION)
-        add_int_constant("READ", READ)
-        add_int_constant("MUT", MUT)
-        add_int_constant("OUT", OUT)
-        add_int_constant("TRAIT", TRAIT)
-        add_int_constant("DEINIT", DEINIT)
-        add_int_constant("WHERE", WHERE)
-        add_int_constant("EXTENSION", EXTENSION)
-        add_int_constant("COMPTIME", COMPTIME)
-        add_int_constant("IMM", IMM)
-        add_int_constant("GENERATOR_TYPE", GENERATOR_TYPE)
-        add_int_constant("NT_OFFSET", NT_OFFSET)
-
-        var tok_name = cpython.PyDict_New()
+        var tok_name_py = cpython.PyDict_New()
 
         def set_tok_name(
-            name: StaticString, value: c_long
+            name: StaticString, key: Int
         ) {
-            mut tok_name,
+            mut tok_name_py,
             cpython,
             PyDict_SetItem_call,
             PyLong_FromLong_call,
             PyUnicode_FromString_call,
         }:
-            var key_obj = PyLong_FromLong_call(value)
+            var key_obj = PyLong_FromLong_call(c_long(key))
             var value_obj = PyUnicode_FromString_call(
                 name.as_c_string_slice().ptr().as_unsafe_any_origin()
             )
             _ = PyDict_SetItem_call(
-                tok_name,
+                tok_name_py,
                 key_obj,
                 value_obj,
             )
@@ -292,89 +294,15 @@ def PyInit_token() abi("C") -> PythonObject:
             # I'm not sure if it steals a reference to key.
             cpython.Py_DecRef(value_obj)
 
-        set_tok_name("ENDMARKER", ENDMARKER)
-        set_tok_name("NAME", NAME)
-        set_tok_name("NUMBER", NUMBER)
-        set_tok_name("STRING", STRING)
-        set_tok_name("NEWLINE", NEWLINE)
-        set_tok_name("INDENT", INDENT)
-        set_tok_name("DEDENT", DEDENT)
-        set_tok_name("LPAR", LPAR)
-        set_tok_name("RPAR", RPAR)
-        set_tok_name("LSQB", LSQB)
-        set_tok_name("RSQB", RSQB)
-        set_tok_name("COLON", COLON)
-        set_tok_name("COMMA", COMMA)
-        set_tok_name("SEMI", SEMI)
-        set_tok_name("PLUS", PLUS)
-        set_tok_name("MINUS", MINUS)
-        set_tok_name("STAR", STAR)
-        set_tok_name("SLASH", SLASH)
-        set_tok_name("VBAR", VBAR)
-        set_tok_name("AMPER", AMPER)
-        set_tok_name("LESS", LESS)
-        set_tok_name("GREATER", GREATER)
-        set_tok_name("EQUAL", EQUAL)
-        set_tok_name("DOT", DOT)
-        set_tok_name("PERCENT", PERCENT)
-        set_tok_name("BACKQUOTE", BACKQUOTE)
-        set_tok_name("LBRACE", LBRACE)
-        set_tok_name("RBRACE", RBRACE)
-        set_tok_name("EQEQUAL", EQEQUAL)
-        set_tok_name("NOTEQUAL", NOTEQUAL)
-        set_tok_name("LESSEQUAL", LESSEQUAL)
-        set_tok_name("GREATEREQUAL", GREATEREQUAL)
-        set_tok_name("TILDE", TILDE)
-        set_tok_name("CIRCUMFLEX", CIRCUMFLEX)
-        set_tok_name("LEFTSHIFT", LEFTSHIFT)
-        set_tok_name("RIGHTSHIFT", RIGHTSHIFT)
-        set_tok_name("DOUBLESTAR", DOUBLESTAR)
-        set_tok_name("PLUSEQUAL", PLUSEQUAL)
-        set_tok_name("MINEQUAL", MINEQUAL)
-        set_tok_name("STAREQUAL", STAREQUAL)
-        set_tok_name("SLASHEQUAL", SLASHEQUAL)
-        set_tok_name("PERCENTEQUAL", PERCENTEQUAL)
-        set_tok_name("AMPEREQUAL", AMPEREQUAL)
-        set_tok_name("VBAREQUAL", VBAREQUAL)
-        set_tok_name("CIRCUMFLEXEQUAL", CIRCUMFLEXEQUAL)
-        set_tok_name("LEFTSHIFTEQUAL", LEFTSHIFTEQUAL)
-        set_tok_name("RIGHTSHIFTEQUAL", RIGHTSHIFTEQUAL)
-        set_tok_name("DOUBLESTAREQUAL", DOUBLESTAREQUAL)
-        set_tok_name("DOUBLESLASH", DOUBLESLASH)
-        set_tok_name("DOUBLESLASHEQUAL", DOUBLESLASHEQUAL)
-        set_tok_name("AT", AT)
-        set_tok_name("ATEQUAL", ATEQUAL)
-        set_tok_name("OP", OP)
-        set_tok_name("COMMENT", COMMENT)
-        set_tok_name("NL", NL)
-        set_tok_name("RARROW", RARROW)
-        set_tok_name("AWAIT", AWAIT)
-        set_tok_name("ASYNC", ASYNC)
-        set_tok_name("ERRORTOKEN", ERRORTOKEN)
-        set_tok_name("COLONEQUAL", COLONEQUAL)
-        set_tok_name("N_TOKENS", N_TOKENS)
-        set_tok_name("STRUCT", STRUCT)
-        set_tok_name("ALIAS", ALIAS)
-        set_tok_name("REF", REF)
-        set_tok_name("VAR", VAR)
-        set_tok_name("MLIR_REGION", MLIR_REGION)
-        set_tok_name("READ", READ)
-        set_tok_name("MUT", MUT)
-        set_tok_name("OUT", OUT)
-        set_tok_name("TRAIT", TRAIT)
-        set_tok_name("DEINIT", DEINIT)
-        set_tok_name("WHERE", WHERE)
-        set_tok_name("EXTENSION", EXTENSION)
-        set_tok_name("COMPTIME", COMPTIME)
-        set_tok_name("IMM", IMM)
-        set_tok_name("GENERATOR_TYPE", GENERATOR_TYPE)
-        set_tok_name("NT_OFFSET", NT_OFFSET)
+        for pair in materialize[tok_name]().items():
+            add_int_constant(pair.value, pair.key)
+            set_tok_name(pair.value, pair.key)
 
         # No need to inc/decref, PyModule_Add steals a reference
         _ = PyModule_Add_call(
             mb.module._obj_ptr,
             "tok_name".as_c_string_slice().ptr().as_unsafe_any_origin(),
-            tok_name,
+            tok_name_py,
         )
 
         return mb.finalize()
