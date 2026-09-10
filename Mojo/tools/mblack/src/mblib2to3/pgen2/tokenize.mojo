@@ -23,8 +23,6 @@
 # Copyright (c) 2001, 2002, 2003, 2004, 2005, 2006 Python Software Foundation.
 # All rights reserved.
 
-# mypy: allow-untyped-defs, allow-untyped-calls
-
 """Tokenization help for Python programs.
 
 generate_tokens(readline) is a generator that breaks a stream of
@@ -49,12 +47,6 @@ are the same, except instead of generating tokens, tokeneater is a callback
 function to which the 5 fields described above are passed as 5 arguments,
 each time a new token is found."""
 
-# from collections.abc import Callable, Iterator
-# from re import Pattern
-# from typing import (
-#    Final,
-# )
-
 from grammar import Grammar
 from token import *
 
@@ -66,34 +58,14 @@ comptime __credits__ = (
 import regex as re
 from regex.comptime_regex import match_first, findall, Match
 
-# import re
-# from codecs import BOM_UTF8, lookup
-
-
 from std.collections import Set
 from std.utils import Variant
-
-# __all__ = [x for x in dir(token) if x[0] != "_"] + [
-#     "tokenize",
-#     "generate_tokens",
-#     "untokenize",
-# ]
-# del token
-
-# Temporary compat aliases
-comptime str = String
-comptime bool = Bool
-comptime int = Int
-comptime tuple = Tuple
-comptime bytes = List[Byte]
-comptime list = List
-# End aliases
 
 
 # Mimic Python's `.startswith`, which takes an iterable.
 def startswith[
     O1: Origin, O2: Origin, O3: Origin
-](needles: Span[StringSlice[O1], O2], haystack: StringSlice[O3]) -> bool:
+](needles: Span[StringSlice[O1], O2], haystack: StringSlice[O3]) -> Bool:
     for needle in needles:
         if haystack.startswith(needle):
             return True
@@ -172,7 +144,7 @@ comptime Single3 = r"[^'\\]*(?:(?:\\.|'(?!''))[^'\\]*)*'''"
 comptime Double3 = r'[^"\\]*(?:(?:\\.|"(?!""))[^"\\]*)*"""'
 
 
-def _is_fstring_or_tstring(token: str, triple_quoted: bool = False) -> bool:
+def _is_fstring_or_tstring(token: String, triple_quoted: Bool = False) -> Bool:
     # F-string/T-string prefixes for detection
     var _FSTRING_SINGLE_PREFIXES: Array[StaticString, 4] = [
         'f"',
@@ -193,7 +165,7 @@ def _is_fstring_or_tstring(token: str, triple_quoted: bool = False) -> bool:
     return startswith(prefixes, token_lower)
 
 
-def _get_fstring_quote(token: str, triple_quoted: bool = False) -> str:
+def _get_fstring_quote(token: String, triple_quoted: Bool = False) -> String:
     """Parse f-string/t-string token to extract quote characters.
 
     Args:
@@ -211,7 +183,7 @@ def _get_fstring_quote(token: str, triple_quoted: bool = False) -> str:
         return String(token[byte=1])  # " or '
 
 
-def scan_fstring_content(s: str, start: int, quote: str) -> int:
+def scan_fstring_content(s: String, start: Int, quote: String) -> Int:
     """Scan f-string content handling nested braces and return end position.
 
     This function properly tracks brace depth to handle nested f-strings
@@ -290,11 +262,11 @@ def scan_fstring_content(s: str, start: int, quote: str) -> int:
 
 
 def _process_fstring_or_tstring(
-    token: str,
-    line: str,
-    start: int,
-    triple_quoted: bool,
-) -> Optional[tuple[str, int, Optional[str]]]:
+    token: String,
+    line: String,
+    start: Int,
+    triple_quoted: Bool,
+) -> Optional[Tuple[String, Int, Optional[String]]]:
     """Process f-string or t-string token and return (token, pos, continuation_quote).
 
     Returns:
@@ -457,12 +429,12 @@ struct IndentationError:
     var err: String
 
 
-comptime Coord = tuple[int, int]
-comptime TokenEater = def(int, str, Coord, Coord, str)
+comptime Coord = Tuple[Int, Int]
+comptime TokenEater = def(Int, String, Coord, Coord, String)
 
 
-comptime GoodTokenInfo = tuple[int, str, Coord, Coord, str]
-comptime TokenInfo = Variant[tuple[int, str], GoodTokenInfo]
+comptime GoodTokenInfo = Tuple[Int, String, Coord, Coord, String]
+comptime TokenInfo = Variant[Tuple[Int, String], GoodTokenInfo]
 
 
 def _is_alpha(byte: Byte) -> Bool:
@@ -495,7 +467,7 @@ def _is_identifier(text: StringSpan) -> Bool:
 
 
 def generate_tokens[
-    f: def() raises -> str
+    f: def() raises -> String
 ](readline: f, grammar: Optional[Grammar] = None) raises Variant[
     TokenError, Error, IndentationError
 ] -> List[GoodTokenInfo]:
@@ -526,9 +498,9 @@ def generate_tokens[
     var endprogs = materialize[endprogs_comptime]()
     var contstr = ""
     var needcont = 0
-    var contline: Optional[str] = None
+    var contline: Optional[String] = None
     var contstr_fstring_quote: Optional[
-        str
+        String
     ] = None  # Track f-string quote for continuation
     var indents: List[Int] = [0]
 
@@ -576,7 +548,7 @@ def generate_tokens[
     }
 
     # Possible it gets used "before initialization", give it a dummy value
-    var strstart: tuple[int, int] = (-100, -100)
+    var strstart: Tuple[Int, Int] = (-100, -100)
     # Same
     var endprog: Matcher = match_first["abcdefg"]
 
@@ -768,7 +740,7 @@ def generate_tokens[
         # handled properly as soft tokens.  This returns true if this can be
         # handled as a normal Mojo token.
         def check_mojo_token(
-            token_value: str, token_end: int
+            token_value: String, token_end: Int
         ) {grammar, prev_token_value, line} -> Bool:
             assert grammar is not None
             # In Mojo, keywords can be used as function/struct names.
@@ -795,7 +767,7 @@ def generate_tokens[
                             var after_bracket = next_token[
                                 byte = idx + 1 :
                             ].lstrip()
-                            return bool(after_bracket) and _is_identifier(
+                            return Bool(after_bracket) and _is_identifier(
                                 after_bracket[byte=0]
                             )
                 return False
