@@ -367,7 +367,7 @@ class ParserGenerator:
             )
             raise AssertionError()
 
-    def expect(self, type: int, value: Any | None = None) -> str:
+    def expect(self, type: int, value: str | None = None) -> str:
         if self.type != type or (value is not None and self.value != value):
             self.raise_error(
                 "expected %s/%s, got %s/%s", type, value, self.type, self.value
@@ -408,11 +408,11 @@ class NFAState:
 
 
 class DFAState:
-    nfaset: dict[NFAState, Any]
+    nfaset: dict[NFAState, int]
     isfinal: bool
     arcs: dict[str, "DFAState"]
 
-    def __init__(self, nfaset: dict[NFAState, Any], final: NFAState) -> None:
+    def __init__(self, nfaset: dict[NFAState, int], final: NFAState) -> None:
         assert isinstance(nfaset, dict)
         assert isinstance(next(iter(nfaset)), NFAState)
         assert isinstance(final, NFAState)
