@@ -36,10 +36,9 @@ from mblib2to3.pgen2 import pygram, token
 from mblib2to3.pgen2.pytree import NL, Leaf, Node, type_repr
 from mypy_extensions import mypyc_attr
 
-from mblack.cache import CACHE_DIR
 from mblack.strings import has_triple_quotes
 
-pygram.initialize(CACHE_DIR)
+pygram.initialize()
 syms: Final = pygram.python_symbols
 
 

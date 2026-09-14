@@ -27,7 +27,6 @@
 
 # Python imports
 import os
-from typing import Union
 
 # Local imports
 from . import pgen
@@ -193,7 +192,7 @@ python_symbols: _python_symbols
 pattern_symbols: _pattern_symbols
 
 
-def initialize(cache_dir: Union[str, "os.PathLike[str]", None] = None) -> None:
+def initialize() -> None:
     global python_grammar
     global python_grammar_no_print_statement
     global python_grammar_no_print_statement_no_exec_statement
