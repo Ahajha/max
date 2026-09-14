@@ -24,13 +24,11 @@
 # Licensed to PSF under a Contributor Agreement.
 
 # Pgen imports
-import os
 from collections.abc import Iterator, Sequence
 from typing import (
     IO,
     Any,
     NoReturn,
-    Union,
 )
 
 from mblib2to3.pgen2 import grammar
@@ -38,20 +36,18 @@ from mblib2to3.pgen2.tokenize import GoodTokenInfo
 
 from . import token, tokenize
 
-Path = Union[str, "os.PathLike[str]"]
-
 
 class PgenGrammar(grammar.Grammar):
     pass
 
 
 class ParserGenerator:
-    filename: Path
+    filename: str
     stream: IO[str]
     generator: Iterator[GoodTokenInfo]
     first: dict[str, dict[str, int] | None]
 
-    def __init__(self, filename: Path, stream: IO[str] | None = None) -> None:
+    def __init__(self, filename: str, stream: IO[str] | None = None) -> None:
         close_stream = None
         if stream is None:
             stream = open(filename)
@@ -395,7 +391,7 @@ class ParserGenerator:
                 msg = " ".join([msg] + list(map(str, args)))
         raise SyntaxError(
             msg,
-            (self.filename, self.end[0], self.end[1], self.line),  # type: ignore
+            (self.filename, self.end[0], self.end[1], self.line),
         )
 
 
@@ -449,9 +445,7 @@ class DFAState:
                 return False
         return True
 
-    __hash__: Any = None  # For Py3 compatibility.
 
-
-def generate_grammar(filename: Path = "Grammar.txt") -> PgenGrammar:
+def generate_grammar(filename: str = "Grammar.txt") -> PgenGrammar:
     p = ParserGenerator(filename)
     return p.make_grammar()
