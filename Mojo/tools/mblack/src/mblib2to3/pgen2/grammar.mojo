@@ -109,7 +109,7 @@ struct Grammar(Copyable, Defaultable, Writable):
     # Also gross, but maybe doable.
     var symbol2number: Dict[String, Int]
     var number2symbol: Dict[Int, String]
-    var states: List[DFA]
+    var states: List[DFA]  # Maybe not used?
     var dfas: Dict[Int, DFAS]
     var labels: List[Label]
     var keywords: Dict[String, Int]
@@ -204,17 +204,42 @@ def clone_grammar(py_self: PythonObject) raises -> PythonObject:
     return PythonObject(alloc=clone^)
 
 
+def grammar_symbol2number_get(
+    py_self: PythonObject, key: PythonObject
+) raises -> PythonObject:
+    ref g: Grammar = py_self.downcast_value_ptr[Grammar]()[]
+    var k = String(key)
+    return PythonObject(g.symbol2number[k])
+
+
+def grammar_symbol2number_set(
+    py_self: PythonObject, key: PythonObject, value: PythonObject
+) raises:
+    ref g: Grammar = py_self.downcast_value_ptr[Grammar]()[]
+    var k = String(key)
+    var v = Int(py=value)
+    g.symbol2number[k] = v
+
+
+def grammar_symbol2number_len(py_self: PythonObject) raises -> PythonObject:
+    ref g: Grammar = py_self.downcast_value_ptr[Grammar]()[]
+    return Int(py=len(g.symbol2number))
+
+
 @export
 def PyInit_grammar() abi("C") -> PythonObject:
     try:
         var mb = PythonModuleBuilder("token")
-        ref cpython = Python().cpython()
+        # ref cpython = Python().cpython()
 
         # Grammar
-        ref grammar_type = (
+        _ = (
             mb.add_type[Grammar]("Grammar")
             .def_init_defaultable[Grammar]()
             .def_method[clone_grammar]("copy")
+            .def_method[grammar_symbol2number_get]("symbol2number_get")
+            .def_method[grammar_symbol2number_set]("symbol2number_set")
+            .def_method[grammar_symbol2number_len]("symbol2number_len")
         )
 
         #        var PyDict_SetItem_call: token.PyDict_SetItem.type = (

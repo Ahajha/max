@@ -85,12 +85,12 @@ def group(*choices: String) -> String:
     return result
 
 
-def any(*choices: String) -> String:
-    return group(*choices) + "*"
+def any(choices: String) -> String:
+    return group(choices) + "*"
 
 
-def maybe(*choices: String) -> String:
-    return group(*choices) + "?"
+def maybe(choices: String) -> String:
+    return group(choices) + "?"
 
 
 def _combinations(*l: String) -> Set[String]:
@@ -491,7 +491,7 @@ def generate_tokens[
 
     var lnum = 0
     var parenlev = 0
-    var continued = 0
+    var continued = False
     comptime numchars = "0123456789"
     comptime pseudoprog = findall[PseudoToken]  # re.UNICODE ??
     var single_quoted = materialize[single_quoted_comptime]()
@@ -733,7 +733,7 @@ def generate_tokens[
                 raise TokenError(
                     String(t"EOF in multi-line statement: ({lnum}, 0)")
                 )
-            continued = 0
+            continued = False
 
         # Given an identifier matching a Mojo token, do extra context sensitive
         # checks for validity.  This is because we can't get things like 'out'
@@ -986,7 +986,7 @@ def generate_tokens[
                         result.append(stashed.value())
                         stashed = None
                     result.append((NL, token, spos, (lnum, pos), line))
-                    continued = 1
+                    continued = True
                 else:
                     if initial in "([{":
                         parenlev += 1
